@@ -78,19 +78,20 @@ The code in this repository is inspired from [Christopher "skeeto" Wellons](http
 
 
 ## Rational
-#### Why support Windows only?
-Most computers games are targeted at Windows. It is also the OS I work with.  
+### Why support Windows only?
+Most computers games are targeted at Windows. Nowadays, Proton handles running Windows games on
+Linux very well, so Windows is my first choice as well. It is also the OS I work with.  
 Nonetheless, I'm interested in adding some cross-OS/ISA/platform support.
 
-#### `s32`? `u64`?
-See [`types.h`](types.h)
+### `s32`? `u64`?
+See [`types.h`](types.h).  
 `s` is for `signed`.  
 `u` is for `unsigned`.  
 `f` is for "floating-point number".  
 The number following is the type's width in bits.  
 This is purely for convenience.
 
-#### Why not use printf, or the C runtime and standard library?
+### Why not use printf, or the C runtime and standard library?
 - I like experimenting and understanding what it takes to build even the most mundane things
 - I'm only using a small subset of features of the printf's family of functions
 - I can manage how logs are buffered, with my own straightforward alternative
@@ -98,7 +99,7 @@ This is purely for convenience.
   runtime, it grows to 115 KB. I like that this libraries could fit in the L1 cache of very old
   CPUs. It's silly, I can't explain it. I also appreciate eliminating a dependency
 
-#### Why is there no `double`/`f64` to string formating function?
+### Why is there no `double`/`f64` to string formating function?
 I almost never use `double`. If I ever need it, then I'll implement something.
 
 
