@@ -105,9 +105,9 @@ I almost never use `double`. If I ever need it, then I'll implement something.
 
 ## Possible improvements
 - Support Unicode characters for logs and log file names
-- Add a variadic, printf-like log function or macro (e.g. `log_append("%s is %u", "Albert", 23)`)
+- Add a variadic, printf-like log function or macro (e.g. `logs_append("%s is %u", "Albert", 23)`)
 - Implement a macro to stringify compile-time constants passed to log functions
-  (e.g. `log_append_float(123.456f)` would compile to an equivalent of `log_append_literal(str)`)
+  (e.g. `logs_append_float(123.456f)` would compile to an equivalent of `logs_append_literal(str)`)
 - Prevent ANSI escape sequences from appearing in the log file (might require changing code architecture)
 - Would mapping the log file to the process' virtual memory and using a view to edit it be better
   than writing to it with `WriteFile`? See [`CreateFileMapping`](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createfilemappinga) and
