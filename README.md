@@ -1,4 +1,4 @@
-# Log
+# Logs
 Personal C buffered logging library.
 Example usage:
 ```C
@@ -55,6 +55,7 @@ int main()
 
 ## Features
 - For Windows (XP and above)
+- Can be compiled with MSVC (GCC and Clang not tested)
 - No C runtime, no C standard library
 - Outputs handling (open, close, disable, enable, flush, ANSI escape sequences toggling)
   - 1 console output, with ANSI escape sequences, created or reused
@@ -83,7 +84,7 @@ The code in this repository is inspired from Chris "skeeto" Wellons's excellent 
   - Alternatively, disable file caching for the file output (see
   [`FILE_FLAG_NO_BUFFERING`](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea#FILE_FLAG_NO_BUFFERING)
   ,
-  [FILE_FLAG_WRITE_THROUGH](`https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea#FILE_FLAG_WRITE_THROUGH`)
+  [`FILE_FLAG_WRITE_THROUGH`](`https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea#FILE_FLAG_WRITE_THROUGH`)
   and
   [Caching behavior](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea#caching-behavior))
 - Add some native support for other OS (Linux?) and other CPU architectures (ARM?)
@@ -91,11 +92,11 @@ The code in this repository is inspired from Chris "skeeto" Wellons's excellent 
 
 ## Rational
 #### Why support Windows only?
-Most computers games are targeted at Windows. It is the OS I work with.  
-But I'm interested in adding some cross-OS/ISA/platform support.
+Most computers games are targeted at Windows. It is also the OS I work with.  
+Nonetheless, I'm interested in adding some cross-OS/ISA/platform support.
 
 #### `s32`? `u64`?
-See [](types.h)
+See [`types.h`](types.h)
 `s` is for `signed`.  
 `u` is for `unsigned`.  
 `f` is for "floating-point number".  
