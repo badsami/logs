@@ -3,53 +3,48 @@ Personal C buffered logging library.
 Example usage:
 ```C
 #include "logs.h"
-#include "num_to_str.h"
 
-int main()
+void mainCRTStartup()
 {
+  const char* logs_file_name = "logs.txt";
+  
   // Open outputs
   logs_open_console_output();
-  logs_open_file_output("logs.txt");
-  
-  char i_str[2];
-  
-  for (int i = 0; i < 10; i++)
-  {
-    // Enable/disable outputs:
-    // - when i is odd, write to the logs file only
-    // - when i is even, write to logs console only
-    s32 toggle = i & 0b1;
-    logs_enable_output(toggle ? LOGS_OUTPUT_FILE : LOGS_OUTPUT_CONSOLE);
-    logs_disable_output(toggle ? LOGS_OUTPUT_CONSOLE : LOGS_OUTPUT_FILE);
-    
-    // Format i to a string once, then reuse the string
-    u32 i_str_size = s32_to_str(i_str, i);
-    
-    for (int j = 0; j < 100; j++)
-    {
-      // Append content to the logs buffer. Thee size of the logs buffer is
-      // limited: it is a compile time macro constant (LOGS_BUFFER_SIZE)
-      // defaulting to 512, which can be changed througn compiler flags.
-      // No checks are performed to verify if what's appended to the logs
-      // buffer actually fits in.
-      logs_append_str(i_str, i_str_size);
-      logs_append_char('.');
-      logs_append_s32(j);
-      logs_append_char(' ');
-    }
+  logs_open_file_output(logs_file_name);
 
-    // Write the buffered logs to open and enabled outputs
+  u32 bits = 0x3C000000;
+  for (u32 bit_pos = 24; bit_pos > 15; bit_pos--)
+  {
+    bits |= (1 << bit_pos);
+    f32 value = *(f32*)&bits;
+
+    // Format logs
+    logs_append_hex(bits);
+    logs_append_literal(" (");
+    logs_append_u32(bits);
+    logs_append_literal(") as a f32 is ");
+    logs_append_f32(value);
+    logs_append_char('\n');
+
+    // When deemed ready, write buffered logs to enabled outputs
     logs_flush();
   }
 
-  logs_append_char('\n');
+  // Write to specific outputs
+  logs_disable_output(LOGS_OUTPUT_CONSOLE);
+  logs_append_literal("========== Logging session end ==========\n\n");
   logs_flush();
+  
+  logs_enable_output(LOGS_OUTPUT_CONSOLE);
+  logs_disable_output(LOGS_OUTPUT_FILE);
+  logs_append_literal("\nLogs written to file ");
+  logs_append_cstr(logs_file_name);
 
-  // Close outputs
+  // Close outputs, implicitly flushing logs buffer to enable outputs
   logs_close_file_output();
   logs_close_console_output();
-  
-  return 0;
+
+  ExitProcess(0);
 }
 ```
 
@@ -101,17 +96,18 @@ See [`types.h`](types.h)
 `u` is for `unsigned`.  
 `f` is for "floating-point number".  
 The number following is the type's width in bits.  
-This is purely for convenience
+This is purely for convenience.
 
 #### Why not use printf, or the C runtime and standard library?
 - I like experimenting and understanding what it takes to build even the most mundane things
 - I'm only using a small subset of features of the printf's family of functions
-- I can manage buffering the way I want with my own code
-- An empty program with just an entry function is ~1.5 KB without the C runtime/standard library, as
-  opposed to ~118 KB when enabled. This is madness to me
+- I can manage how logs are buffered, with my own straightforward alternative
+- Compiling this library (`example.c` included) creates an 8 KB executable. By including the C
+  runtime, it grows to 115 KB. I like that this libraries could fit in the L1 cache of very old
+  CPUs. It's silly, I can't explain it. I also appreciate eliminating a dependency
 
 #### Why is there no `double`/`f64` to string formating function?
-I alsmost never use `double`. If I ever need it, then I'll implement something.
+I almost never use `double`. If I ever need it, then I'll implement something.
 
 ## License
 You can use the code in this repository however you'd like. Credit is appreciated. 
