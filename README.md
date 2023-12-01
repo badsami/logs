@@ -95,7 +95,7 @@ This is purely for convenience.
 - I like experimenting and understanding what it takes to build even the most mundane things
 - I'm only using a small subset of features of the printf's family of functions
 - I can manage how logs are buffered, with my own straightforward alternative
-- Compiling this library (`example.c` included) creates an 8 KB executable. By including the C
+- Compiling this library ([`example.c`](example.c) included) creates an 8 KB executable. By including the C
   runtime, it grows to 115 KB. I like that this libraries could fit in the L1 cache of very old
   CPUs. It's silly, I can't explain it. I also appreciate eliminating a dependency
 
