@@ -1,6 +1,6 @@
 # Logs
 Personal C buffered logging library.  
-Example (available in [`example.c`](example.c)):`
+Example (available in [`example.c`](example.c)):
 ```C
 #include "logs.h"
 
