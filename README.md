@@ -69,11 +69,11 @@ The code in this repository is inspired from [Christopher "skeeto" Wellons](http
 
 
 ## Repository files
-- `logs.h` / `logs.c`: logs output management, logs appending functions
-- `num_to_str.h` / `num_to_str.c`: number to string formatting functions
-- `types.h`: custom typedefs, for personal convience
-- `example.c`: simple example usage of this library
-- `build.bat`: sample script to compile the example the example provided, and to show how to include
+- [`logs.h`](logs.h) / [`logs.c`](logs.c): logs output management, logs appending functions
+- [`num_to_str.h`](num_to_str.h) / [`num_to_str.c`](num_to_str.c): number to string formatting functions
+- [`types.h`](types.h): custom typedefs, for personal convience
+- [`example.c`](example.c): simple example usage of this library
+- [`build.bat`](build.bat): sample script to compile the example the example provided, and to show how to include
   and compile this library into a project
 
 
