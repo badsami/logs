@@ -20,8 +20,11 @@ static void logs_open_output(const schar8* file_path, u32 access, u32 creation_m
 
 static void logs_close_output(logs_output_idx output_idx)
 {
-  logs_disable_output(output_idx);
-  if (logs.buf_end_idx != 0)
+  u32 output_mask          = (1 << output_idx);
+  u32 output_was_enabled   = logs.outputs_state_bits & output_mask;
+  logs.outputs_state_bits &= ~output_mask;
+  
+  if (logs.buf_end_idx != 0 && output_was_enabled)
   {
     WriteFile(logs.outputs[output_idx], logs.buffer, logs.buf_end_idx, 0, 0);
     if (logs.outputs_state_bits == 0)
@@ -30,7 +33,7 @@ static void logs_close_output(logs_output_idx output_idx)
       logs.buf_end_idx = 0;
     }
   }
-    
+  
   CloseHandle(logs.outputs[output_idx]);
   logs.outputs[output_idx] = 0;
 }
