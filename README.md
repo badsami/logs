@@ -48,6 +48,7 @@ void mainCRTStartup()
 }
 ```
 
+
 ## Features
 - For Windows (XP and above)
 - Can be compiled with MSVC (GCC and Clang not tested)
@@ -57,32 +58,15 @@ void mainCRTStartup()
   - 1 named file output, created or appended to
 - Custom formatting of some basic types:
   - Signed and unsigned integers up to 64-bit, in decimal, hexadecimal and binary format
-  - Represents floating-point values up to -/+ 2,147,483,648 with 6 fractional digits.
+  - Floating-point values up to -/+ 2,147,483,648 with 6 fractional digits.
     NaN and infinities are represented as -/+ 2,147,483,648, depending on the sign bit.
 - Buffered logging of the above types, literal constant strings, C strings, and single characters
-- Logs don't generate any code by default to prevent any accidental performance hit. Add or remove
-  any code generated for logs with a compile time macro (`ENABLE_LOGS`)
+- Logs are turned off by default to prevent any accidental performance hit. Add or remove any code
+  generated for logs with a compile time macro (`ENABLE_LOGS`)
 
 The code in this repository is inspired from [Christopher "skeeto" Wellons](https://github.com/skeeto)'s excellent article
 "[Let's implement buffered, formatted output](https://nullprogram.com/blog/2023/02/13/)"
 
-
-## Possible improvements
-- Support Unicode characters for logs and log file names
-- Add a variadic, printf-like log function or macro (e.g. `log_append("%s is %u", "Albert", 23)`)
-- Implement a macro to stringify compile-time constants passed to log functions
-  (e.g. `log_append_float(123.456f)` would compile to an equivalent of `log_append_literal(str)`)
-- Prevent ANSI escape sequences from appearing in the log file (might require changing code architecture)
-- Would mapping the log file to the process' virtual memory and using a view to edit it be better
-  than writing to it with `WriteFile`? See [`CreateFileMapping`](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createfilemappinga) and
-  [`MapViewOfFile`](https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-mapviewoffile)
-  - Alternatively, disable file caching for the file output (see
-  [`FILE_FLAG_NO_BUFFERING`](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea#FILE_FLAG_NO_BUFFERING)
-  ,
-  [`FILE_FLAG_WRITE_THROUGH`](`https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea#FILE_FLAG_WRITE_THROUGH`)
-  and
-  [Caching behavior](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea#caching-behavior))
-- Add some native support for other OS (Linux?) and other CPU architectures (ARM?)
 
 ## Repository files
 - logs.h / logs.c: logs output management, logs appending functions
@@ -91,6 +75,7 @@ The code in this repository is inspired from [Christopher "skeeto" Wellons](http
 - example.c: simple example usage of this library
 - build.bat: sample script to compile the example the example provided, and to show how to include
   and compile this library into a project
+
 
 ## Rational
 #### Why support Windows only?
@@ -115,6 +100,25 @@ This is purely for convenience.
 
 #### Why is there no `double`/`f64` to string formating function?
 I almost never use `double`. If I ever need it, then I'll implement something.
+
+
+## Possible improvements
+- Support Unicode characters for logs and log file names
+- Add a variadic, printf-like log function or macro (e.g. `log_append("%s is %u", "Albert", 23)`)
+- Implement a macro to stringify compile-time constants passed to log functions
+  (e.g. `log_append_float(123.456f)` would compile to an equivalent of `log_append_literal(str)`)
+- Prevent ANSI escape sequences from appearing in the log file (might require changing code architecture)
+- Would mapping the log file to the process' virtual memory and using a view to edit it be better
+  than writing to it with `WriteFile`? See [`CreateFileMapping`](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createfilemappinga) and
+  [`MapViewOfFile`](https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-mapviewoffile)
+  - Alternatively, disable file caching for the file output (see
+  [`FILE_FLAG_NO_BUFFERING`](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea#FILE_FLAG_NO_BUFFERING)
+  ,
+  [`FILE_FLAG_WRITE_THROUGH`](`https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea#FILE_FLAG_WRITE_THROUGH`)
+  and
+  [Caching behavior](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea#caching-behavior))
+- Add some native support for other OS (Linux?) and other CPU architectures (ARM?)
+
 
 ## License
 You can use the code in this repository however you'd like. Credit is appreciated. 
