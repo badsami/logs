@@ -84,6 +84,13 @@ The code in this repository is inspired from [Christopher "skeeto" Wellons](http
   [Caching behavior](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea#caching-behavior))
 - Add some native support for other OS (Linux?) and other CPU architectures (ARM?)
 
+## Repository files
+- logs.h / logs.c: logs output management, logs appending functions
+- num_to_str.h / num_to_str.c: number to string formatting functions
+- types.h: custom typedefs, for personal convience
+- example.c: simple example usage of this library
+- build.bat: sample script to compile the example the example provided, and to show how to include
+  and compile this library into a project
 
 ## Rational
 #### Why support Windows only?
