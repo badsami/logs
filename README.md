@@ -63,7 +63,7 @@ void mainCRTStartup()
 - Logs don't generate any code by default to prevent any accidental performance hit. Add or remove
   any code generated for logs with a compile time macro (`ENABLE_LOGS`)
 
-The code in this repository is inspired from Chris "skeeto" Wellons's excellent article
+The code in this repository is inspired from [Christopher "skeeto" Wellons](https://github.com/skeeto)'s excellent article
 "[Let's implement buffered, formatted output](https://nullprogram.com/blog/2023/02/13/)"
 
 
