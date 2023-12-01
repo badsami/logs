@@ -99,7 +99,7 @@ This is purely for convenience.
   runtime, it grows to 115 KB. I like that this libraries could fit in the L1 cache of very old
   CPUs. It's silly, I can't explain it. I also appreciate eliminating a dependency
 
-### Why is there no `double`/`f64` to string formating function?
+### Why is there no `double`/`f64`-to-string formatting function?
 I almost never use `double`. If I ever need it, then I'll implement something.
 
 
