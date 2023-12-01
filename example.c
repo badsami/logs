@@ -40,7 +40,7 @@ void mainCRTStartup()
   logs_append_literal("\nLogs written to file ");
   logs_append_cstr(logs_file_name);
 
-  // Close outputs, implicitly flushing logs buffer to enable outputs
+  // Close outputs, implicitly flushing logs buffer to enabled outputs
   logs_close_file_output();
   logs_close_console_output();
 
