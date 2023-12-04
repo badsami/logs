@@ -73,8 +73,8 @@ The code in this repository is inspired from [Christopher "skeeto" Wellons](http
 - [`num_to_str.h`](num_to_str.h) / [`num_to_str.c`](num_to_str.c): number to string formatting functions
 - [`types.h`](types.h): custom typedefs, for personal convience
 - [`example.c`](example.c): simple example usage of this library
-- [`build.bat`](build.bat): sample script to compile the example the example provided, and to show how to include
-  and compile this library into a project
+- [`build.bat`](build.bat): sample script to compile the example provided, and to show how to include
+  and compile this library into another codebase
 
 
 ## Rational
