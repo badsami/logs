@@ -1,3 +1,7 @@
+// Compilation command lines (inside a native tools command prompt for VS):
+//   mkdir build\obj
+//   cl.exe /nologo /DWIN32_LEAN_AND_MEAN /DNOMINMAX /DENABLE_LOGS /Fobuild\obj\ /GS- /W4 num_to_str.c logs.c example.c /link /subsystem:console /nodefaultlib /entry:mainCRTStartup /out:build\example.exe kernel32.lib
+//   build\example.exe
 #include "logs.h"
 
 __declspec(dllimport) void __stdcall ExitProcess(u32);
