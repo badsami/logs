@@ -236,13 +236,7 @@ u32 hex_to_str(schar8* buffer, u64 data)
   u32 msb_idx;
   _BitScanReverse64(&msb_idx, data | 0b1);
   
-  // ceiled(a/b) = (a + b - 1) / b
-  // a = (msb_idx + 1) (number of bits used to encode data)
-  // b = 4 (bits in an hexadecimal digit)
-  // ceiled(a/b) = (msb_idx + 1 + 4 - 1) / 4
-  // ceiled(a/b) = (msb_idx + 4) / 4
-  // ceiled(a/b) = 1u + msb_idx / 4
-  // Adding the 2 characters for the "0x" prefix:
+  // 2 prefix char (0x) + 1 char minimum (0) + msb_idx / 4 (for each additional nibble)
   u32 str_size = 3u + msb_idx / 4u;
   
   schar8* data_str = buffer + str_size;
@@ -267,7 +261,7 @@ u32 bin_to_str(schar8* buffer, u64 data)
   u32 str_size;
   _BitScanReverse64(&str_size, data | 0b1);
 
-  // 2 characaters for the "0b" prefix + at least 1 digit/bit = 3
+  // 2 characaters for the "0b" prefix + at least 1 bit = 3
   str_size += 3u;
   schar8* data_str = buffer + str_size;
   do
