@@ -8,10 +8,9 @@
 // string inside the passed buffer. The number of characters can be extrapolated from it.
 // Example usage:
 //
-//   u8     buffer[NUM_TO_F32_STR_SIZE];
+//   u8     buffer[F32_STR_MAX_SIZE];
 //   float  num = -12345.06789f
-//   u8*    str_out;
-//   u32    str_size = float_to_str(num, buffer, str_out);
+//   u32    str_size = float_to_str(buffer, num);
 #pragma once
 
 #include "types.h"
