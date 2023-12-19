@@ -1,16 +1,10 @@
 // Number to string conversion functions.
 //
-// All functions take in the number to convert to string, and an array at least of the size
-// specified, in which the string will be written. The returned value is the size of the formatted
-// string inside the passed buffer, starting from its end.
-
-// The returned pointer indicates the start of the
-// string inside the passed buffer. The number of characters can be extrapolated from it.
 // Example usage:
 //
 //   u8     buffer[F32_STR_MAX_SIZE];
 //   float  num = -12345.06789f
-//   u32    str_size = float_to_str(buffer, num);
+//   u32    str_size = f32_to_str(buffer, num);
 #pragma once
 
 #include "types.h"
