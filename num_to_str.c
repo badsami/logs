@@ -242,17 +242,16 @@ u32 hex_to_str(schar8* buffer, u64 data)
   // ceiled(a/b) = 1u + msb_idx / 4
   // Adding the 2 characters for the "0x" prefix:
   u32 str_size = 3u + msb_idx / 4u;
+  
   const schar8 gt_9_offset = ('A' - 1) - '9';
   schar8* data_str = buffer + str_size;
   do
   {
     data_str--;
 
-    u64    sixteens_in_data = data / 16llu;
-    schar8 right_digit      = (schar8)(data - sixteens_in_data * 16llu);
-    
+    schar8 right_digit      = (schar8)(data & 0xF);
     *data_str = '0' + right_digit + (right_digit > 9) * gt_9_offset;
-    data      = sixteens_in_data;
+    data      = data >> 4;
   }
   while (data != 0llu);
 
