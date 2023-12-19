@@ -231,6 +231,8 @@ u32 f32_to_str(schar8* buffer, f32 num)
 
 u32 hex_to_str(schar8* buffer, u64 data)
 {
+  static const schar8 hex_digits[] = "0123456789ABCDEF";
+  
   u32 msb_idx;
   _BitScanReverse64(&msb_idx, data | 0b1);
   
@@ -243,15 +245,14 @@ u32 hex_to_str(schar8* buffer, u64 data)
   // Adding the 2 characters for the "0x" prefix:
   u32 str_size = 3u + msb_idx / 4u;
   
-  const schar8 gt_9_offset = ('A' - 1) - '9';
   schar8* data_str = buffer + str_size;
   do
   {
     data_str--;
 
-    schar8 right_digit      = (schar8)(data & 0xF);
-    *data_str = '0' + right_digit + (right_digit > 9) * gt_9_offset;
-    data      = data >> 4;
+    schar8 digit_idx = (schar8)(data & 0xF);
+    *data_str = hex_digits[digit_idx];
+    data      >>= 4;
   }
   while (data != 0llu);
 
