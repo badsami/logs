@@ -235,7 +235,7 @@ u32 hex_to_str(schar8* buffer, u64 data)
   _BitScanReverse64(&msb_idx, data | 0b1);
   
   // ceiled(a/b) = (a + b - 1) / b
-  // a = (msb_idx + 1)
+  // a = (msb_idx + 1) (number of bits used to encode data)
   // b = 4 (bits in an hexadecimal digit)
   // ceiled(a/b) = (msb_idx + 1 + 4 - 1) / 4
   // ceiled(a/b) = (msb_idx + 4) / 4
