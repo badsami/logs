@@ -261,7 +261,7 @@ u32 bin_to_str(schar8* buffer, u64 data)
   u32 str_size;
   _BitScanReverse64(&str_size, data | 0b1);
 
-  // 2 characaters for the "0b" prefix + at least 1 bit = 3
+  // 2 characters for the "0b" prefix + at least 1 bit = 3
   str_size += 3u;
   schar8* data_str = buffer + str_size;
   do
