@@ -34,7 +34,7 @@ popd
                  /Fo%OBJ_DIR%\         ^
                  /GS-                  ^
                  /W4
-  SET LINK_FLAGS=/link                         ^
+  set LINK_FLAGS=/link                         ^
                  /subsystem:console            ^
                  /nodefaultlib                 ^
                  /entry:mainCRTStartup         ^
