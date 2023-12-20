@@ -6,7 +6,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Data
 #if !defined(LOGS_BUFFER_SIZE) || (LOGS_BUFFER_SIZE == 0)
-#  define LOGS_BUFFER_SIZE 512
+#  define LOGS_BUFFER_SIZE 1024
 #endif
 
 // Index of available outputs in logs.outputs
