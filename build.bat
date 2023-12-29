@@ -33,7 +33,7 @@ popd
                  /DENABLE_LOGS         ^
                  /Fo%OBJ_DIR%\         ^
                  /GS-                  ^
-                 /W4
+                 /W4 /O2
   set LINK_FLAGS=/link                         ^
                  /subsystem:console            ^
                  /nodefaultlib                 ^
