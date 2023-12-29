@@ -94,7 +94,7 @@ void logs_enable_console_ansi_escape_sequence(void)
   }
 }
 
-void logs_disable_console_ansi_escape_sequence()
+void logs_disable_console_ansi_escape_sequence(void)
 {
   if ((logs.outputs[LOGS_OUTPUT_CONSOLE] != 0) && (logs.using_ansi_esc_seq != 0))
   {
