@@ -157,49 +157,49 @@ void logs_flush(void)
 //// Log formatting and buffering
 void logs_append_u32(u32 num)
 {
-  schar8* logs_buf_end  = logs.buffer + logs.buf_end_idx;
+  schar8* logs_buf_end = logs.buffer + logs.buf_end_idx;
   u32     num_str_size = u32_to_str(logs_buf_end, num);
   logs.buf_end_idx += num_str_size;
 }
 
 void logs_append_u64(u64 num)
 {
-  schar8* logs_buf_end  = logs.buffer + logs.buf_end_idx;
+  schar8* logs_buf_end = logs.buffer + logs.buf_end_idx;
   u32     num_str_size = u64_to_str(logs_buf_end, num);
   logs.buf_end_idx += num_str_size;
 }
 
 void logs_append_s32(s32 num)
 {
-  schar8* logs_buf_end  = logs.buffer + logs.buf_end_idx;
+  schar8* logs_buf_end = logs.buffer + logs.buf_end_idx;
   u32     num_str_size = s32_to_str(logs_buf_end, num);
   logs.buf_end_idx += num_str_size;
 }
 
 void logs_append_s64(s64 num)
 {
-  schar8* logs_buf_end  = logs.buffer + logs.buf_end_idx;
+  schar8* logs_buf_end = logs.buffer + logs.buf_end_idx;
   u32     num_str_size = s64_to_str(logs_buf_end, num);
   logs.buf_end_idx += num_str_size;
 }
 
 void logs_append_f32(f32 num)
 {
-  schar8* logs_buf_end  = logs.buffer + logs.buf_end_idx;
+  schar8* logs_buf_end = logs.buffer + logs.buf_end_idx;
   u32     num_str_size = f32_to_str(logs_buf_end, num);
   logs.buf_end_idx += num_str_size;
 }
 
 void logs_append_hex(u64 data)
 {
-  schar8* logs_buf_end   = logs.buffer + logs.buf_end_idx;
+  schar8* logs_buf_end  = logs.buffer + logs.buf_end_idx;
   u32     data_str_size = hex_to_str(logs_buf_end, data);
   logs.buf_end_idx += data_str_size;
 }
 
 void logs_append_bin(u64 data)
 {
-  schar8* logs_buf_end   = logs.buffer + logs.buf_end_idx;
+  schar8* logs_buf_end  = logs.buffer + logs.buf_end_idx;
   u32     data_str_size = bin_to_str(logs_buf_end, data);
   logs.buf_end_idx += data_str_size;
 }
