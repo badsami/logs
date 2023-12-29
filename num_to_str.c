@@ -1,5 +1,12 @@
 #include "num_to_str.h"
-#include <intrin.h>
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//// Intrinsics
+// Declare the specific intrinsics used below as extern, rather than including the 1025-line-long
+// intrin.h header 
+extern u8 _BitScanReverse(u32* idx, u32 mask);
+extern u8 _BitScanReverse64(u32* idx, u64 mask);
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Utility
