@@ -251,7 +251,7 @@ u32 hex_to_str(schar8* buffer, u64 data)
   {
     data_str--;
 
-    schar8 digit_idx = (schar8)(data & 0xF);
+    u32 digit_idx = data & 0xF;
     *data_str = hex_digits[digit_idx];
     data      >>= 4;
   }
