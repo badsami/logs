@@ -98,12 +98,11 @@ This is purely for convenience.
 
 ### Why not use printf, or the C runtime and standard library?
 - I like experimenting and understanding what it takes to build even the most mundane things
-- I'm only using a small subset of features of the printf's family of functions
+- I'm only using a small subset of features of the printf's family of functions in my day-to-day work
 - I can manage how logs are buffered, with my own straightforward alternative
-- Compiling this library ([`example.c`](example.c) included) creates an 8 KB executable. By
-  including the C runtime, it grows to 115 KB. I like that this library could fit in the L1
-  cache of very old CPUs. It's silly, I can't explain it. I also appreciate eliminating a
-  dependency
+- Compiling this library ([`example.c`](example.c) included) creates an 5.6 KB executable. By
+  including the C runtime, it grows to 115 KB. I appreciate eliminating that big of a dependency:
+  in theory, the program could fit in the L1 cache of a 20+-years-old CPU
 
 ### Why is there no `double`/`f64`-to-string formatting function?
 I almost never use `double`. If I ever need it, then I'll implement something.
