@@ -1,15 +1,50 @@
 #include "num_to_str.h"
+#include "isa.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Intrinsics
 // Declare the specific intrinsics used below as extern, rather than including the 1025-line-long
 // intrin.h header 
-extern u8 _BitScanReverse(u32* idx, u32 mask);
-extern u8 _BitScanReverse64(u32* idx, u64 mask);
+extern u8 _BitScanReverse(u32* msb_idx, u32 mask);
+
+#if defined(ISA_x64)
+extern u8 _BitScanReverse64(u32* msb_idx, u64 mask);
+#endif
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-//// Utility
+//// Utilities
+// x86 32-bit compilation target, without SSE
+#if defined(ISA_x86) && defined(_M_IX86_FP) && (_M_IX86_FP == 0)
+#  include "win32_x86_crt_no_sse.c"
+#endif
+
+// This may look useless, but it will later be expanded to support platforms currently unsupported
+static inline u32 bsr32(u32 value)
+{
+  u32 msb_idx;
+  _BitScanReverse(&msb_idx, value);
+  return msb_idx;
+}
+
+static inline u32 bsr64(u64 value)
+{
+#if defined(ISA_x64)
+  u32 msb_idx;
+  _BitScanReverse64(&msb_idx, value);
+  return msb_idx;
+#else
+  // Assumming little endian order
+  u32* halves            = (u32*)&value;
+  u32  relevant_half_idx = halves[1] != 0;
+  u32  relevant_half     = halves[relevant_half_idx];
+  u32  msb_idx           = bsr32(relevant_half);
+  u32  msb_idx_offset    = relevant_half_idx << 5;
+  
+  return msb_idx + msb_idx_offset;
+#endif
+}
+
 u32 u32_str_size(u32 num)
 {
   // https://commaok.xyz/post/lookup_tables/
@@ -28,8 +63,7 @@ u32 u32_str_size(u32 num)
     42949672960, 42949672960                            // (10 << 32)
   };
 
-  u32 msb_idx;
-  _BitScanReverse(&msb_idx, num | 0b1);
+  u32 msb_idx = bsr32(num | 0b1);
   return (num + table[msb_idx]) >> 32;
 }
 
@@ -107,8 +141,7 @@ u32 u64_str_size(u64 num)
     10000000000000000000llu
   };
 
-  u32 msb_idx;
-  _BitScanReverse64(&msb_idx, num | 0b1);
+  u32 msb_idx = bsr64(num | 0b1);
 
   u32 digit_count = msb_to_max_digit_count[msb_idx];
   digit_count -= (num < thresholds[digit_count - 1u]);
@@ -232,16 +265,16 @@ u32 f32_to_str(schar8* buffer, f32 num)
   {
     *num_frac_str = '0';
   }
-  
-  return num_int_str_size + frac_max_digit + 1;
+
+  const u32 dot_separator_size = 1;
+  return num_int_str_size + dot_separator_size + frac_max_digit;
 }
 
-u32 hex_to_str(schar8* buffer, u64 data)
+u32 hex64_to_str(schar8* buffer, u64 data)
 {
   static const schar8 hex_digits[] = "0123456789ABCDEF";
   
-  u32 msb_idx;
-  _BitScanReverse64(&msb_idx, data | 0b1);
+  u32 msb_idx = bsr64(data | 0b1);
   
   // 2 prefix char (0x) + 1 char minimum (0) + msb_idx / 4 (for each additional nibble)
   u32 str_size = 3u + msb_idx / 4u;
@@ -263,10 +296,9 @@ u32 hex_to_str(schar8* buffer, u64 data)
   return str_size;
 }
 
-u32 bin_to_str(schar8* buffer, u64 data)
+u32 bin64_to_str(schar8* buffer, u64 data)
 {
-  u32 str_size;
-  _BitScanReverse64(&str_size, data | 0b1);
+  u32 str_size = bsr64(data | 0b1);
 
   // 2 characters for the "0b" prefix + at least 1 bit = 3
   str_size += 3u;
