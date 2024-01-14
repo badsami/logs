@@ -18,7 +18,7 @@ void mainCRTStartup()
     f32 value = *(f32*)&bits;
 
     // Format logs
-    logs_append_hex(bits);
+    logs_append_hex64(bits);
     logs_append_literal(" (");
     logs_append_u32(bits);
     logs_append_literal(") as a f32 is ");
