@@ -96,8 +96,16 @@ REM ========
   for /f "tokens=*" %%i in ('!FIND_VS_INSTALL_DIR_CMD!') do set VS_INSTALL_DIR=%%i
 
   if not exist !VS_INSTALL_DIR! (
-    echo Error: could not find Visual Studio installation
-    goto :eof
+    set FIND_VS_INSTALL_DIR_CMD=%VSWHERE_EXE% -latest                                                 ^
+                                              -requires Microsoft.VisualStudio.Workload.NativeDesktop ^
+                                              -property installationPath
+
+    for /f "tokens=*" %%i in ('!FIND_VS_INSTALL_DIR_CMD!') do set VS_INSTALL_DIR=%%i
+
+    if not exist !VS_INSTALL_DIR! (
+      echo Error: could not find Visual Studio Build Tools nor the Visual Studio Native Desktop workload
+      goto :eof
+    )
   )
 
   set VSDEVCMD="!VS_INSTALL_DIR!\Common7\Tools\VsDevCmd.bat"
