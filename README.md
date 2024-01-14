@@ -48,7 +48,7 @@ void mainCRTStartup()
 ```
 
 You can compile this example yourself by running [`build.bat`](build.bat) (requires Visual Studio
-Build Tools for Visual Studio).
+Build Tools or the Native Desktop workload).
 
 ## Features
 - For Windows XP and above
@@ -110,7 +110,6 @@ I almost never use `double`. If I ever need it, then I'll implement something.
 
 
 ## Possible improvements
-- Make the example compilable with a Visual Studio installation, not necessarily with Build Tools
 - Support Unicode characters for logs and log file names
 - Add a variadic, printf-like log function or macro (e.g. `logs_append("%s is %u", "Albert", 23)`)
 - Implement a macro to stringify compile-time constants passed to log functions
