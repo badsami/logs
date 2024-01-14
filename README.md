@@ -56,8 +56,8 @@ Build Tools for Visual Studio).
 - Compiles with MSVC (GCC and Clang not tested)
 - No C runtime, no C standard library
 - Output steams control (open, close, disable, enable, flush, ANSI escape sequences toggling)
-  - Provides 1 console output, with ANSI escape sequences, which is created or reused
-  - Provides 1 named file output, which is either created or appended to
+  - Provides 1 console output, with ANSI escape sequences, which is either created or reused
+  - Provides 1 named file output, which is either created or reused
 - Custom formatting of some basic types:
   - Signed and unsigned integers up to 64-bit, in decimal, hexadecimal and binary format
   - Floating-point values up to -/+ 2,147,483,648 with 6 fractional digits.
