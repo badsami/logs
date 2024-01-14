@@ -44,7 +44,7 @@ static void logs_close_output(logs_output_idx output_idx)
 struct logs logs =
 {
   .outputs            = {0, 0},
-  .buf_end_idx            = 0,
+  .buf_end_idx        = 0,
   .outputs_state_bits = 0,
   .using_ansi_esc_seq = 0
 };
@@ -190,17 +190,17 @@ void logs_append_f32(f32 num)
   logs.buf_end_idx += num_str_size;
 }
 
-void logs_append_hex(u64 data)
+void logs_append_hex64(u64 data)
 {
   schar8* logs_buf_end  = logs.buffer + logs.buf_end_idx;
-  u32     data_str_size = hex_to_str(logs_buf_end, data);
+  u32     data_str_size = hex64_to_str(logs_buf_end, data);
   logs.buf_end_idx += data_str_size;
 }
 
-void logs_append_bin(u64 data)
+void logs_append_bin64(u64 data)
 {
   schar8* logs_buf_end  = logs.buffer + logs.buf_end_idx;
-  u32     data_str_size = bin_to_str(logs_buf_end, data);
+  u32     data_str_size = bin64_to_str(logs_buf_end, data);
   logs.buf_end_idx += data_str_size;
 }
 

@@ -95,10 +95,10 @@ void logs_append_s64(s64 num);
 void logs_append_f32(f32 num);
 
 // Append the hexadecimal representation of some data to the log buffer
-void logs_append_hex(u64 data);
+void logs_append_hex64(u64 data);
 
 // Append the binary representation of some data to the log buffer
-void logs_append_bin(u64 data);
+void logs_append_bin64(u64 data);
 
 // Append a string to the log buffer
 void logs_append_str(const schar8* msg, u32 msg_size);
