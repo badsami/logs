@@ -3,10 +3,29 @@ REM This is an example build script. This is not meant to work on every Windows 
 
 setlocal EnableDelayedExpansion
 
+REM Files & directories
 set BUILD_DIR=build
 set OBJ_DIR=%BUILD_DIR%\obj
-set EXE_OUTPUT=out.exe
+set EXE_OUTPUT=logs_example.exe
 set VSWHERE_EXE="%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+
+REM Compilation options
+set COMP_ARCH=x64
+set COMP_FLAGS=/nologo               ^
+               /DWIN32_LEAN_AND_MEAN ^
+               /DNOMINMAX            ^
+               /DENABLE_LOGS         ^
+               /Fo%OBJ_DIR%\         ^
+               /GS-                  ^
+               /W4                   ^
+               /O2
+set LINK_FLAGS=/link                         ^
+               /subsystem:console            ^
+               /nodefaultlib                 ^
+               /entry:mainCRTStartup         ^
+               /out:%BUILD_DIR%\%EXE_OUTPUT%
+set SOURCES=num_to_str.c logs.c example.c
+set LIBRARIES=kernel32.lib
 
 pushd %~dp0
   goto :arg_%1
@@ -14,6 +33,7 @@ pushd %~dp0
 popd
 
 :arg_
+:arg_x64
   REM Unless VsDevCmd.bat was already called, initialize a context for cl.exe to run
   if "%VSCMD_VER%"=="" (
     call :initialize_env
@@ -27,32 +47,32 @@ popd
     mkdir %OBJ_DIR%
   )
 
-  set COMP_FLAGS=/nologo               ^
-                 /DWIN32_LEAN_AND_MEAN ^
-                 /DNOMINMAX            ^
-                 /DENABLE_LOGS         ^
-                 /Fo%OBJ_DIR%\         ^
-                 /GS-                  ^
-                 /W4 /O2
-  set LINK_FLAGS=/link                         ^
-                 /subsystem:console            ^
-                 /nodefaultlib                 ^
-                 /entry:mainCRTStartup         ^
-                 /out:%BUILD_DIR%\%EXE_OUTPUT%
-  set SOURCES=num_to_str.c logs.c example.c
-  set LIBRARIES=kernel32.lib
-  
   call cl.exe %COMP_FLAGS% %SOURCES% %LINK_FLAGS% %LIBRARIES%
-              
+  goto :eof
+
+:arg_x86
+  echo Compiling x86
+  set COMP_ARCH=x86
+  set COMP_FLAGS=!COMP_FLAGS! /arch:SSE
+  goto :arg_
+  goto :eof
+
+:arg_x87
+  echo Compiling x87
+  set COMP_ARCH=x86
+  set COMP_FLAGS=!COMP_FLAGS! /arch:IA32
+  goto :arg_
   goto :eof
 
 :arg_run
-  call %BUILD_DIR%\%EXE_OUTPUT% %*
+  call %BUILD_DIR%\%EXE_OUTPUT%
   goto :eof
 
 :arg_clean
-  rmdir /Q /S %BUILD_DIR%
-  echo Removed %BUILD_DIR%
+  if exist %BUILD_DIR% (
+    rmdir /Q /S %BUILD_DIR%
+    echo Removed %BUILD_DIR%
+  )
   goto :eof
 
 :arg_unknown
@@ -100,8 +120,8 @@ REM ========
   REM Gain some time by using global variables instead of passing arguments
   set VSCMD_SKIP_SENDTELEMETRY=1
   set __VSCMD_ARG_NO_LOGO=1
-  set __VSCMD_ARG_TGT_ARCH=x64
-  set __VSCMD_ARG_HOST_ARCH=x64
+  set __VSCMD_ARG_TGT_ARCH=!COMP_ARCH!
+  set __VSCMD_ARG_HOST_ARCH=!COMP_ARCH!
   echo Calling VsDevCmd.bat...
   call !VSDEVCMD!
 
