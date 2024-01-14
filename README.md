@@ -79,9 +79,8 @@ The code in this repository is inspired from [Christopher "skeeto" Wellons](http
 
 ## Rational
 ### Why support Windows only?
-Most computers games are targeted at Windows. Nowadays, Proton handles running Windows games on
-Linux very well, so Windows is my first choice as well. It is also the OS I work with.  
-Nonetheless, I'm interested in adding some cross-OS/ISA/platform support.
+Most computers games are targeted at Windows. Nowadays, [Proton](https://github.com/ValveSoftware/Proton) handles running Windows games on
+Linux very well, so Windows is my first choice as well. It is also the OS I work with. Nonetheless, I'm interested in adding some cross-OS/ISA/platform support.
 
 ### `s32`? `u64`?
 See [`types.h`](types.h).  
