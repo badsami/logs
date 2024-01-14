@@ -66,7 +66,7 @@ u32 s64_to_str(schar8* buffer, s64 num);
 u32 f32_to_str(schar8* buffer, f32 num);
 
 // Convert at most 64-bit of data to a hexadecimal string prefixed with 0x
-u32 hex_to_str(schar8* buffer, u64 data);
+u32 hex64_to_str(schar8* buffer, u64 data);
 
 // Convert at most 64-bit of data to a binary string prefixed with 0b
-u32 bin_to_str(schar8* buffer, u64 data);
+u32 bin64_to_str(schar8* buffer, u64 data);
