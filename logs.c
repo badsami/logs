@@ -232,4 +232,7 @@ void logs_append_char(schar8 c)
   logs.buf_end_idx++;
 }
 
+#elif defined(_MSC_VER)
+#  pragma warning(disable: 4206)
 #endif // ENABLE_LOGS
+
