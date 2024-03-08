@@ -18,12 +18,12 @@ void mainCRTStartup()
     f32 value = *(f32*)&bits;
 
     // Format logs
-    logs_append_hex64(bits);
-    logs_append_literal(" (");
-    logs_append_u32(bits);
-    logs_append_literal(") as a f32 is ");
-    logs_append_f32(value);
-    logs_append_char('\n');
+    log_min_hex_u32(bits);
+    log_literal(" (");
+    log_u32(bits);
+    log_literal(") as a f32 is ");
+    log_f32(value);
+    log_char('\n');
 
     // When deemed ready, write buffered logs to enabled outputs
     logs_flush();
@@ -31,13 +31,13 @@ void mainCRTStartup()
 
   // Write to specific outputs
   logs_disable_output(LOGS_OUTPUT_CONSOLE);
-  logs_append_literal("========== Logging session end ==========\n\n");
+  log_literal("========== Logging session end ==========\n\n");
   logs_flush();
   
   logs_enable_output(LOGS_OUTPUT_CONSOLE);
   logs_disable_output(LOGS_OUTPUT_FILE);
-  logs_append_literal("\nLogs written to file ");
-  logs_append_cstr(logs_file_name);
+  log_literal("\nLogs written to file ");
+  log_cstr(logs_file_name);
 
   // Close outputs, implicitly flushing logs buffer to enabled outputs
   logs_close_file_output();
