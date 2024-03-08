@@ -42,31 +42,53 @@ u32 u64_str_size(u64 num);
 //             lower, depending on the range of the passed number. It is up to the caller to pass a
 //             sufficiently big buffer
 // - num/data: the number/data to write in the buffer. Each function may write several digits, a
-//             period, a negative sign and/or a base prefix (0b, 0x) to the buffer
+//             period, a negative sign and a base prefix (0b, 0x) to the buffer
 //
 // Output: amount of characters written to the buffer, such that buffer + output points to the
-//         end of the number, i.e. the first character after the number's string
+//         end of the string, i.e. the first character after the number's string
 //
 // By default, values are written in base 10, hex_to_str() and bin_to_str() being the exceptions
 
-// Preferred over u64_to_str() for unsigned values that can be represented with 32 bits or less
+// Prefer over u64_to_str() for unsigned values that can be represented with 32 bits or less
 u32 u32_to_str(schar8* buffer, u32 num);
 
 // Slower than u32_to_str(), use only for unsigned values that need more than 32 bits
 u32 u64_to_str(schar8* buffer, u64 num);
 
-// Preferred over s64_to_str(), for signed values that can be represented with 32 bits or less
+// Prefer over s64_to_str() for signed values that can be represented with 32 bits or less
 u32 s32_to_str(schar8* buffer, s32 num);
 
 // Slower than s32_to_str(), use only for unsigned values that need more than 32 bits
 u32 s64_to_str(schar8* buffer, s64 num);
 
-// Represents floating-point values up to -/+ 2,147,483,648 with 6 fractional digits.
-// NaN and infinities are represented as -/+ 2,147,483,648, depending on the sign bit.
+// Writes floating-point values up to -/+ 2,147,483,648 with 6 fractional digits.
+// NaN and infinities are represented as -/+ 2,147,483,648, depending on the sign bit
 u32 f32_to_str(schar8* buffer, f32 num);
 
-// Convert at most 64-bit of data to a hexadecimal string prefixed with 0x
-u32 hex64_to_str(schar8* buffer, u64 data);
+// Writes nibble_count nibbles of a u32 as an hexadecimal string. nibble_count is
+// expected to be 1 or greater
+u32 u32_to_sized_hex_str(schar8* buffer, u32 num, u32 nibble_count);
 
-// Convert at most 64-bit of data to a binary string prefixed with 0b
-u32 bin64_to_str(schar8* buffer, u64 data);
+// Writes nibble_count nibbles of a u64 as an hexadecimal string. nibble_count is
+// expected to be 1 or greater
+u32 u64_to_sized_hex_str(schar8* buffer, u64 num, u32 nibble_count);
+
+// Writes bit_count bits of a u32 as an binary string. bit_count is expected to be
+// 1 or greater
+u32 u32_to_sized_bin_str(schar8* buffer, u32 num, u32 bit_count);
+
+// Writes bit_count bits of a u64 as an binary string. bit_count is expected to be
+// 1 or greater
+u32 u64_to_sized_bin_str(schar8* buffer, u64 num, u32 bit_count);
+
+// Writes only the significant nibbles of a u32 as an hexadecimal string
+u32 u32_to_min_hex_str(schar8* buffer, u32 num);
+
+// Writes only the significant nibbles of a u64 as an hexadecimal string
+u32 u64_to_min_hex_str(schar8* buffer, u64 num);
+
+// Writes only the significant bits of a u32 as an hexadecimal string
+u32 u32_to_min_bin_str(schar8* buffer, u32 num);
+
+// Writes only the significant bits of a u64 as an hexadecimal string
+u32 u64_to_min_bin_str(schar8* buffer, u64 num);

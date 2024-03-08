@@ -19,6 +19,8 @@ extern u8 _BitScanReverse64(u32* msb_idx, u64 mask);
 #  include "win32_x86_crt_no_sse.c"
 #endif
 
+static const schar8 hex_digits[] = "0123456789ABCDEF";
+
 // This may look useless, but it will later be expanded to support platforms currently unsupported
 static inline u32 bsr32(u32 value)
 {
@@ -70,13 +72,13 @@ u32 u32_str_size(u32 num)
 u32 u64_str_size(u64 num)
 {
   // bsr(num|0b1) = msb_idx, with:
-  // - bsr: the Bit Scan Reverse instruction, num being ORed because 0 still needs 1 bit to exist
+  // - bsr: the Bit Scan Reverse instruction, num being ORed for num=0 to return 1
   // - msb_idx: index of the most significant bit of num, with:
   //   • 0 being the index of the lowest, rightmost bit
   //   • 63 being the index of the highest, leftmost bit
   //
   // msb_idx can be extrapolated to get the lowest and highest value num can take. For instance:
-  // bsr(num|0b1) = 3 = msb_idx, meaning num is of the form 0b1XXX, X being either a 0 or 1 bit. 
+  // bsr(num|0b1) = 3 = msb_idx, meaning num is of the form 0b1xxx, x being either a 0 or 1 bit. 
   // The lowest num can be is 0b1000, while the highest it can be is 0b1111. Another way to write
   // the minimum and maximum value of num is:
   //
@@ -270,48 +272,170 @@ u32 f32_to_str(schar8* buffer, f32 num)
   return num_int_str_size + dot_separator_size + frac_max_digit;
 }
 
-u32 hex64_to_str(schar8* buffer, u64 data)
+u32 u32_to_sized_hex_str(schar8* buffer, u32 num, u32 nibble_count)
 {
-  static const schar8 hex_digits[] = "0123456789ABCDEF";
+  schar8* end     = buffer + 1;
+  schar8* num_str = end + nibble_count;
   
-  u32 msb_idx = bsr64(data | 0b1);
-  
-  // 2 prefix char (0x) + 1 char minimum (0) + msb_idx / 4 (for each additional nibble)
-  u32 str_size = 3u + msb_idx / 4u;
-  
-  schar8* data_str = buffer + str_size;
   do
   {
-    data_str--;
-
-    u32 digit_idx = data & 0xF;
-    *data_str = hex_digits[digit_idx];
-    data      >>= 4;
+    u32 nibble_idx = num & 0xF;
+    *num_str = hex_digits[nibble_idx];
+    num_str--;
+    num >>= 4;
   }
-  while (data != 0llu);
+  while (num_str != end);
 
-  *(data_str - 1) = 'x';
-  *(data_str - 2) = '0';
+  buffer[0] = '0';
+  buffer[1] = 'x';
+   
+  return nibble_count + 2;
+}
+
+u32 u64_to_sized_hex_str(schar8* buffer, u64 num, u32 nibble_count)
+{
+  schar8* end     = buffer + 1;
+  schar8* num_str = end + nibble_count;
+  
+  do
+  {
+    u32 nibble_idx = num & 0xF;
+    *num_str = hex_digits[nibble_idx];
+    num_str--;
+    num >>= 4;
+  }
+  while (num_str != end);
+
+  buffer[0] = '0';
+  buffer[1] = 'x';
+   
+  return nibble_count + 2;
+}
+
+u32 u32_to_sized_bin_str(schar8* buffer, u32 num, u32 bit_count)
+{
+  schar8* end     = buffer + 1;
+  schar8* num_str = end + bit_count;
+  
+  do
+  {
+    schar8 bit = num & 0b1;
+    *num_str = '0' + bit;
+    num_str--;
+    num >>= 1;
+  }
+  while (num_str != end);
+
+  buffer[0] = '0';
+  buffer[1] = 'b';
+   
+  return bit_count + 2;
+}
+
+u32 u64_to_sized_bin_str(schar8* buffer, u64 num, u32 bit_count)
+{
+  schar8* end     = buffer + 1;
+  schar8* num_str = end + bit_count;
+  
+  do
+  {
+    schar8 bit = num & 0b1;
+    *num_str = '0' + bit;
+    num_str--;
+    num >>= 1;
+  }
+  while (num_str != end);
+
+  buffer[0] = '0';
+  buffer[1] = 'b';
+   
+  return bit_count + 2;
+}
+
+u32 u32_to_min_hex_str(schar8* buffer, u32 num)
+{
+  // 2 prefix char (0x) + 1 char minimum (0) + msb_idx / 4 (for each additional nibble)
+  u32     msb_idx  = bsr64(num | 0b1);
+  u32     str_size = 3u + msb_idx / 4u;
+  schar8* num_str  = buffer + str_size;
+  
+  do
+  {
+    num_str--;
+
+    u32 digit_idx = num & 0xF;
+    *num_str = hex_digits[digit_idx];
+    num >>= 4;
+  }
+  while (num != 0u);
+
+  *(num_str - 1) = 'x';
+  *(num_str - 2) = '0';
   
   return str_size;
 }
 
-u32 bin64_to_str(schar8* buffer, u64 data)
+u32 u64_to_min_hex_str(schar8* buffer, u64 num)
 {
-  u32 str_size = bsr64(data | 0b1);
-
-  // 2 characters for the "0b" prefix + at least 1 bit = 3
-  str_size += 3u;
-  schar8* data_str = buffer + str_size;
+  // 2 prefix char (0x) + 1 char minimum (0) + msb_idx / 4 (for each additional nibble)
+  u32     msb_idx  = bsr64(num | 0b1);
+  u32     str_size = 3u + msb_idx / 4u;
+  schar8* num_str  = buffer + str_size;
+  
   do
   {
-    data_str--;
-    *data_str = '0' + (data & 0b1);
-    data >>= 1;
-  } while (data != 0llu);
+    num_str--;
 
-  *(data_str - 1) = 'b';
-  *(data_str - 2) = '0';
+    u32 digit_idx = num & 0xF;
+    *num_str = hex_digits[digit_idx];
+    num >>= 4;
+  }
+  while (num != 0llu);
+
+  *(num_str - 1) = 'x';
+  *(num_str - 2) = '0';
+  
+  return str_size;
+}
+
+u32 u32_to_min_bin_str(schar8* buffer, u32 num)
+{
+  // 2 characters for the "0b" prefix + at least 1 bit = 3
+  u32 str_size = bsr64(num | 0b1);
+  str_size += 3u;
+  schar8* num_str = buffer + str_size;
+  
+  do
+  {
+    num_str--;
+    schar8 bit = num & 0b1;
+    *num_str = '0' + bit;
+    num >>= 1;
+  } while (num != 0u);
+
+  *(num_str - 1) = 'b';
+  *(num_str - 2) = '0';
+  
+  return str_size;
+}
+
+u32 u64_to_min_bin_str(schar8* buffer, u64 num)
+{
+  // 2 characters for the "0b" prefix + at least 1 bit = 3
+  u32 str_size = bsr64(num | 0b1);
+  str_size += 3u;
+  schar8* num_str = buffer + str_size;
+  
+  do
+  {
+    num_str--;
+    schar8 bit = num & 0b1;
+    *num_str = '0' + bit;
+    num >>= 1;
+  } while (num != 0llu);
+
+  *(num_str - 1) = 'b';
+  *(num_str - 2) = '0';
   
   return str_size;
 }
