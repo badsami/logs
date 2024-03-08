@@ -125,7 +125,7 @@ REM ========
   REM in this function, set VSDEVCMD directly with an absolute path, replace "call !VSDEVCMD!" with
   REM "call %VSDEVCMD%", and remove "setlocal EnableDelayedExpansion" at the top of the file.
   
-  REM Gain some time by using global variables instead of passing arguments
+  REM Gain some time by using environment variables instead of passing arguments
   set VSCMD_SKIP_SENDTELEMETRY=1
   set __VSCMD_ARG_NO_LOGO=1
   set __VSCMD_ARG_TGT_ARCH=!COMP_ARCH!
