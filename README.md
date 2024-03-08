@@ -129,4 +129,4 @@ I almost never use `double`. If I ever need it, then I'll implement something.
 
 
 ## License
-The code in the repository in released in the public domain. You can use it freely.
+The code in this repository is released in the public domain. You can use it freely of any constraint.
