@@ -155,59 +155,34 @@ void logs_flush(void)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Log formatting and buffering
-void logs_append_u32(u32 num)
-{
-  schar8* logs_buf_end = logs.buffer + logs.buf_end_idx;
-  u32     num_str_size = u32_to_str(logs_buf_end, num);
-  logs.buf_end_idx += num_str_size;
-}
+#define LOG_MINIMAL(data, func)                          \
+  schar8* logs_buf_end = logs.buffer + logs.buf_end_idx; \
+  u32     str_size     = func(logs_buf_end, data);       \
+  logs.buf_end_idx += str_size
 
-void logs_append_u64(u64 num)
-{
-  schar8* logs_buf_end = logs.buffer + logs.buf_end_idx;
-  u32     num_str_size = u64_to_str(logs_buf_end, num);
-  logs.buf_end_idx += num_str_size;
-}
+#define LOG_SIZED(data, count, func)                      \
+  schar8* logs_buf_end = logs.buffer + logs.buf_end_idx;  \
+  u32     str_size     = func(logs_buf_end, data, count); \
+  logs.buf_end_idx += str_size
+  
+void log_u32(u32 data)                             { LOG_MINIMAL(data, u32_to_str); }
+void log_u64(u64 data)                             { LOG_MINIMAL(data, u64_to_str); }
+void log_s32(s32 data)                             { LOG_MINIMAL(data, s32_to_str); }
+void log_s64(s64 data)                             { LOG_MINIMAL(data, s64_to_str); }
+void log_f32(f32 data)                             { LOG_MINIMAL(data, f32_to_str); }
+void log_min_hex_u32(u32 data)                     { LOG_MINIMAL(data, u32_to_min_hex_str); }
+void log_min_hex_u64(u64 data)                     { LOG_MINIMAL(data, u64_to_min_hex_str); }
+void log_min_bin_u32(u32 data)                     { LOG_MINIMAL(data, u32_to_min_bin_str); }
+void log_min_bin_u64(u64 data)                     { LOG_MINIMAL(data, u64_to_min_bin_str); }
+void log_sized_hex_u32(u32 data, u32 nibble_count) { LOG_SIZED(data, nibble_count, u32_to_sized_hex_str); }
+void log_sized_hex_u64(u64 data, u32 nibble_count) { LOG_SIZED(data, nibble_count, u64_to_sized_hex_str); }
+void log_sized_bin_u32(u32 data, u32 bit_count)    { LOG_SIZED(data, bit_count, u32_to_sized_bin_str); }
+void log_sized_bin_u64(u64 data, u32 bit_count)    { LOG_SIZED(data, bit_count, u64_to_sized_bin_str); }
 
-void logs_append_s32(s32 num)
-{
-  schar8* logs_buf_end = logs.buffer + logs.buf_end_idx;
-  u32     num_str_size = s32_to_str(logs_buf_end, num);
-  logs.buf_end_idx += num_str_size;
-}
+void log_data(void* data, to_str_func func) { LOG_MINIMAL(data, func); }
 
-void logs_append_s64(s64 num)
+void log_str(const schar8* msg, u32 msg_size)
 {
-  schar8* logs_buf_end = logs.buffer + logs.buf_end_idx;
-  u32     num_str_size = s64_to_str(logs_buf_end, num);
-  logs.buf_end_idx += num_str_size;
-}
-
-void logs_append_f32(f32 num)
-{
-  schar8* logs_buf_end = logs.buffer + logs.buf_end_idx;
-  u32     num_str_size = f32_to_str(logs_buf_end, num);
-  logs.buf_end_idx += num_str_size;
-}
-
-void logs_append_hex64(u64 data)
-{
-  schar8* logs_buf_end  = logs.buffer + logs.buf_end_idx;
-  u32     data_str_size = hex64_to_str(logs_buf_end, data);
-  logs.buf_end_idx += data_str_size;
-}
-
-void logs_append_bin64(u64 data)
-{
-  schar8* logs_buf_end  = logs.buffer + logs.buf_end_idx;
-  u32     data_str_size = bin64_to_str(logs_buf_end, data);
-  logs.buf_end_idx += data_str_size;
-}
-
-void logs_append_str(const schar8* msg, u32 msg_size)
-{
-  // No checks are performed. Suppose that the log buffer size is adequate and that logs_flush()
-  // will be called at the right time.
   const u32 new_buf_end_idx = logs.buf_end_idx + msg_size;
   for (u32 buf_idx = logs.buf_end_idx; buf_idx < new_buf_end_idx; buf_idx++)
   {
@@ -217,7 +192,7 @@ void logs_append_str(const schar8* msg, u32 msg_size)
   logs.buf_end_idx = new_buf_end_idx;
 }
 
-void logs_append_cstr(const schar8* msg)
+void log_cstr(const schar8* msg)
 {
   while (*msg != '\0')
   {
@@ -225,14 +200,13 @@ void logs_append_cstr(const schar8* msg)
   }
 }
 
-void logs_append_char(schar8 c)
+void log_char(schar8 c)
 {
-  // Same as above
   logs.buffer[logs.buf_end_idx] = c;
   logs.buf_end_idx++;
 }
 
 #elif defined(_MSC_VER)
-#  pragma warning(disable: 4206)
-#endif // ENABLE_LOGS
+#  pragma warning(disable: 4206) // Disable "empty translation unit" warning
+#endif // defined(ENABLE_LOGS) && (ENABLE_LOGS != 0)
 

@@ -1,13 +1,14 @@
-#if defined(ENABLE_LOGS) && (ENABLE_LOGS != 0)
 #pragma once
-
 #include "types.h"
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Data
 #if !defined(LOGS_BUFFER_SIZE) || (LOGS_BUFFER_SIZE == 0)
-#  define LOGS_BUFFER_SIZE 1024
+#  define LOGS_BUFFER_SIZE 4096
 #endif
+
+typedef u32 (*to_str_func)(schar8* buffer, void* data);
 
 // Index of available outputs in logs.outputs
 typedef enum logs_output_idx
@@ -39,6 +40,8 @@ struct logs
   u32 initial_console_mode;
 };
 
+
+#if defined(ENABLE_LOGS) && (ENABLE_LOGS != 0)
 extern struct logs logs;
 
 
@@ -78,59 +81,85 @@ void logs_flush(void);
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Log formatting and buffering
 //// /!\ These functions perform no check to ensure there is enough space in the log buffer /!\
-
 // Append a u8, u16 or u32 to the log buffer
-void logs_append_u32(u32 num);
+void log_u32(u32 data);
 
 // Append a u64 to the log buffer
-void logs_append_u64(u64 num);
+void log_u64(u64 data);
 
 // Append a s8, s16 or s32 to the log buffer
-void logs_append_s32(s32 num);
+void log_s32(s32 data);
 
 // Append a s64 to the log buffer
-void logs_append_s64(s64 num);
+void log_s64(s64 data);
 
-// Append a floating-point number to the log buffer
-void logs_append_f32(f32 num);
+// Append a floating-point databer to the log buffer
+void log_f32(f32 data);
 
-// Append the hexadecimal representation of some data to the log buffer
-void logs_append_hex64(u64 data);
+// Append only the significant hexadecimal nibbles of a u32 to the log buffer
+void log_min_hex_u32(u32 data);
+// Append only the significant hexadecimal nibbles of a u64 to the log buffer
+void log_min_hex_u64(u64 data);
 
-// Append the binary representation of some data to the log buffer
-void logs_append_bin64(u64 data);
+// Append only the significant binary bits of a u32 to the log buffer
+void log_min_bin_u32(u32 data);
+
+// Append only the significant binary bits of a u64 to the log buffer
+void log_min_bin_u64(u64 data);
+
+// Append nibble_count hexadecimal nibbles of a u32 to the log buffer
+void log_sized_hex_u32(u32 data, u32 nibble_count);
+
+// Append nibble_count hexadecimal nibbles of a u64 to the log buffer
+void log_sized_hex_u64(u64 data, u32 nibble_count);
+
+// Append bit_count binary bits of a u32 to the log buffer
+void log_sized_bin_u32(u32 data, u32 bit_count);
+
+// Append bit_count binary bits of a u64 to the log buffer
+void log_sized_bin_u64(u64 data, u32 bit_count);
+
+// Append any kind of data to the log buffer, using the provided formatting function
+void log_data(void* data, to_str_func func);
 
 // Append a string to the log buffer
-void logs_append_str(const schar8* msg, u32 msg_size);
+void log_str(const schar8* msg, u32 msg_size);
 
 // Append a C string to the log buffer
-void logs_append_cstr(const schar8* msg);
+void log_cstr(const schar8* msg);
 
 // Append a single character to the log buffer
-void logs_append_char(schar8 c);
+void log_char(schar8 c);
 
 // Append a literal, compile-time string between quotes to the log buffer
-#define logs_append_literal(msg) logs_append_str(msg, sizeof(msg) - 1)
+#define log_literal(msg) log_str(msg, sizeof(msg) - 1)
 
 #else // defined(ENABLE_LOGS) && (ENABLE_LOGS != 0)
 #  define logs_open_console_output()                  do { } while (0)
 #  define logs_close_console_output()                 do { } while (0)
 #  define logs_enable_console_ansi_escape_sequence()  do { } while (0)
 #  define logs_disable_console_ansi_escape_sequence() do { } while (0)
-#  define logs_open_file_output(file_path)            do { } while (0)
+#  define logs_open_file_output(file_path)            do { (void)(file_path); } while (0)
 #  define logs_close_file_output()                    do { } while (0)
-#  define logs_disable_output(output_idx)             do { } while (0)
-#  define logs_enable_output(output_idx)              do { } while (0)
+#  define logs_disable_output(output_idx)             do { (void)(output_idx); } while (0)
+#  define logs_enable_output(output_idx)              do { (void)(output_idx); } while (0)
 #  define logs_flush()                                do { } while (0)
-#  define logs_append_u32(num)                        do { } while (0)
-#  define logs_append_u64(num)                        do { } while (0)
-#  define logs_append_s32(num)                        do { } while (0)
-#  define logs_append_s64(num)                        do { } while (0)
-#  define logs_append_f32(num)                        do { } while (0)
-#  define logs_append_hex64(data)                     do { } while (0)
-#  define logs_append_bin64(data)                     do { } while (0)
-#  define logs_append_str(msg, msg_size)              do { } while (0)
-#  define logs_append_cstr(msg)                       do { } while (0)
-#  define logs_append_char(c)                         do { } while (0)
-#  define logs_append_literal(msg)                    do { } while (0)
+#  define log_u32(num)                                do { (void)(num); } while (0)
+#  define log_u64(num)                                do { (void)(num); } while (0)
+#  define log_s32(num)                                do { (void)(num); } while (0)
+#  define log_s64(num)                                do { (void)(num); } while (0)
+#  define log_f32(num)                                do { (void)(num); } while (0)
+#  define log_min_hex_u32(data)                       do { (void)(data); } while (0)
+#  define log_min_hex_u64(data)                       do { (void)(data); } while (0)
+#  define log_min_bin_u32(data)                       do { (void)(data); } while (0)
+#  define log_min_bin_u64(data)                       do { (void)(data); } while (0)
+#  define log_sized_hex_u32(data, nibble_count)       do { (void)(data); (void)(nibble_count); } while (0)
+#  define log_sized_hex_u64(data, nibble_count)       do { (void)(data); (void)(nibble_count); } while (0)
+#  define log_sized_bin_u32(data, bit_count)          do { (void)(data); (void)(bit_count); } while (0)
+#  define log_sized_bin_u64(data, bit_count)          do { (void)(data); (void)(bit_count); } while (0)      
+#  define log_data(data, func)                        do { (void)(data); (void)(func); } while (0)
+#  define log_str(msg, msg_size)                      do { (void)(msg); (void)(msg_size); } while (0)
+#  define log_cstr(msg)                               do { (void)(msg); } while (0)
+#  define log_char(c)                                 do { (void)(c); } while (0)
+#  define log_literal(msg)                            do { (void)(msg); } while (0)
 #endif // defined(ENABLE_LOGS) && (ENABLE_LOGS != 0)
