@@ -64,7 +64,7 @@ Build Tools or the Native Desktop workload).
     NaN and infinities are represented as -/+ 2,147,483,648, depending on the sign bit
 - Buffered logging of the above types, literal constant strings, C strings, and single characters
 - Logs are turned off by default to prevent any accidental performance hit, and are enabled by
-  defining the compile-time macro `ENABLE_LOGS` (setting it to 0 disable logs)
+  defining the compile-time macro `ENABLE_LOGS` (setting it to 0 disables logs)
 
 The code in this repository is inspired from
 [Christopher "skeeto" Wellons](https://github.com/skeeto)'s excellent article
@@ -129,4 +129,4 @@ I almost never use `double`. If I ever need it, then I'll implement something.
 
 
 ## License
-The code in this repository is released in the public domain. You can use it freely of any constraint.
+The code in this repository is released in the public domain. You can use it with no constraint.
