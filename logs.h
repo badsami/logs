@@ -135,6 +135,8 @@ void log_char(schar8 c);
 #define log_literal(msg) log_str(msg, sizeof(msg) - 1)
 
 #else // defined(ENABLE_LOGS) && (ENABLE_LOGS != 0)
+#  pragma message("Logs disabled. Define ENABLE_LOGS or set ENABLE_LOGS to a non-zero value to " \
+                  "enable logs")
 #  define logs_open_console_output()                  do { } while (0)
 #  define logs_close_console_output()                 do { } while (0)
 #  define logs_enable_console_ansi_escape_sequence()  do { } while (0)
