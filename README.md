@@ -55,7 +55,7 @@ Build Tools or the Native Desktop workload).
 - Support for x86 64-bit and 32-bit architectures
 - Compiles with MSVC (GCC and Clang not tested)
 - No C runtime, no C standard library
-- Output steams control (open, close, disable, enable, flush, ANSI escape sequences toggling)
+- Provides control over output streams (open, close, disable, enable, flush, ANSI escape sequences toggling)
   - Provides 1 console output, with ANSI escape sequences, which is either created or reused
   - Provides 1 named file output, which is either created or reused
 - Custom formatting of some basic types:
