@@ -122,7 +122,7 @@ I almost never use `double`. If I ever need it, then I'll implement something.
   [`MapViewOfFile`](https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-mapviewoffile)
   - Alternatively, disable file caching for the file output (see
   [`FILE_FLAG_NO_BUFFERING`](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea#FILE_FLAG_NO_BUFFERING),
-  [`FILE_FLAG_WRITE_THROUGH`](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea#FILE_FLAG_WRITE_THROUGH`)
+  [`FILE_FLAG_WRITE_THROUGH`](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea#FILE_FLAG_WRITE_THROUGH)
   and
   [Caching behavior](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea#caching-behavior))
 - Add some native support for other OS (Linux?) and other CPU architectures (ARM?)
