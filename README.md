@@ -76,7 +76,7 @@ The code in this repository is inspired from
     - Values are written in full. Scientific notation and other notations are not used
   - ASCII, UTF-8 and UTF-16 characters, null-terminated, sized and literal compile-time strings
 - Compile-time defined logs buffer size through macro definition `/DLOGS_BUFFER_SIZE`, which defaults to 4 KB
-- Helpers to manage logs buffer memory, with [types_max_str_size.h](types_max_str_size.h) to estimate the maximum number of characters a fundamental type may be represented with, and with [logs_buffer_remaining_bytes() in log.c](https://github.com/badsami/logs/blob/main/logs.c#L184-#L190))
+- Helpers to manage logs buffer memory, with [types_max_str_size.h](types_max_str_size.h) to estimate the maximum number of characters a fundamental type may be represented with, and with [logs_buffer_remaining_bytes()](https://github.com/badsami/logs/blob/main/logs.c#L184-#L190)
 - Logs are turned off by default to prevent any accidental performance hit, and are enabled by defining the compile-time macro `LOGS_ENABLED` (setting it to `0` disables logs)
 
 Because this library gives control over the logs buffer size and when it should be written to enabled outputs, all functions, once called, assume there is enough space left in the logs buffer to append the content they are passed. You are in charge of choosing a log buffer size that is appropriate to your needs, and of calling logs_write() before the buffer become over-saturated.  
