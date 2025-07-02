@@ -24,9 +24,9 @@ void mainCRTStartup()
     // Format logs
     log_literal_str("0x");
     log_hex_num(bits);
-    log_literal_str(" (");
+    log_literal_str(u" (");
     log_dec_num(bits);
-    log_literal_str(") as a f32 is ");
+    log_literal_str(u8") as a f32 is ");
     log_dec_num(value);
     log_character('\n');
   }
