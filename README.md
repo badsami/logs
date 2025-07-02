@@ -72,7 +72,7 @@ The code in this repository is inspired from
     - `-qnan`, `qnan`, `-snan`, `snan`, `-inf` or `inf` may be output for matching non-number values
     - `-0` will be converted to `0`
     - Without a predetermined size, 6 digits past the period are written to the output. This can be increased up to 9 (see `F32_DEC_FRAC_DEFAULT_STR_SIZE` and `F32_DEC_FRAC_MULT` in [types_max_str_size.h](types_max_str_size.h))
-    - When passing a fixed fractional part size in digits that exceeds 9, the fractional part's will be truncated to 9 (see `F32_DEC_FRAC_MAX_STR_SIZE` in [types_max_str_size.h](types_max_str_size.h))
+    - When passing a fixed fractional part size in digits that exceeds 9, the fractional part will be truncated to 9 digits (see `F32_DEC_FRAC_MAX_STR_SIZE` in [types_max_str_size.h](types_max_str_size.h))
     - Values are written in full. Scientific notation and other notations are not used
   - ASCII, UTF-8 and UTF-16 characters, null-terminated, sized and literal compile-time strings
 - Compile-time defined logs buffer size through macro definition `/DLOGS_BUFFER_SIZE`, which defaults to 4 KB
