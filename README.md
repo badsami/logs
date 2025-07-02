@@ -79,9 +79,11 @@ The code in this repository is inspired from
 - Helpers to manage logs buffer memory, with [types_max_str_size.h](types_max_str_size.h) to estimate the maximum number of characters a fundamental type may be represented with, and with [logs_buffer_remaining_bytes()](https://github.com/badsami/logs/blob/main/logs.c#L184-#L190)
 - Logs are turned off by default to prevent any accidental performance hit, and are enabled by defining the compile-time macro `LOGS_ENABLED` (setting it to `0` disables logs)
 
-Because this library gives control over the logs buffer size and when it should be written to enabled outputs, all functions, once called, assume there is enough space left in the logs buffer to append the content they are passed. You are in charge of choosing a log buffer size that is appropriate to your needs, and of calling logs_write() before the buffer become over-saturated.  
+> [!NOTE]
+> Because this library gives control over the logs buffer size and when it should be written to enabled outputs, all functions, once called, assume there is enough space left in the logs buffer to append the content they are passed. You are in charge of choosing a log buffer size that is appropriate to your needs, and of calling `logs_write()` before the buffer become over-saturated.  
 
-It is important to compile with [/utf-8](https://learn.microsoft.com/en-us/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8?view=msvc-170) if your are passing UTF-8 encoded characters and strings to the functions of this library.
+> [!NOTE]
+> It is important to compile with [/utf-8](https://learn.microsoft.com/en-us/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8?view=msvc-170) if your are passing UTF-8 encoded characters and strings to the functions of this library.
 
 
 ## Repository files
