@@ -12,19 +12,18 @@ void mainCRTStartup()
   logs_open_console_output();
   logs_open_file_output(logs_file_name);
 
-  u32 bits = 0x3C000000;
+  union { u32 bits; f32 val; } num = {.bits = 0x3C000000};
   for (u32 bit_pos = 24; bit_pos > 15; bit_pos--)
   {
-    bits |= (1 << bit_pos);
-    f32 value = *(f32*)&bits;
+    num.bits |= (1 << bit_pos);
 
     // Format logs
     log_literal_str("0x");
-    log_hex_num(bits);
+    log_hex_num(num.bits);
     log_literal_str(u" (");
-    log_dec_num(bits);
+    log_dec_num(num.bits);
     log_literal_str(u8") as a f32 is ");
-    log_dec_num(value);
+    log_dec_num(num.val);
     log_character('\n');
   }
 
