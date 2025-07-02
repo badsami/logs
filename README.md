@@ -83,14 +83,14 @@ The code in this repository is inspired from
 > Because this library gives control over the logs buffer size and when it should be written to enabled outputs, all functions, once called, assume there is enough space left in the logs buffer to append the content they are passed. You are in charge of choosing a log buffer size that is appropriate to your needs, and of calling `logs_write()` before the buffer becomes over-saturated.  
 
 > [!NOTE]
-> It is important to compile with [/utf-8](https://learn.microsoft.com/en-us/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8?view=msvc-170) if your are passing UTF-8 encoded characters and strings to the functions of this library.
+> It is important to compile with [/utf-8](https://learn.microsoft.com/en-us/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8?view=msvc-170) if you are passing UTF-8 encoded characters and strings to the functions of this library.
 
 
 ## Repository files
 - [`logs.h`](logs.h) / [`logs.c`](logs.c): logs output management, fundamental types formatting and buffering, logs buffer consumption helper
 - [`to_str_utilities.h`](to_str_utilities.h) / [`to_str_utilities.c`](to_str_utilities.c): helpers to categorise and efficiently convert numbers to characters
 - [`types.h`](types.h): custom typedefs, for convenience
-- [`example.c`](example.c): simple example usage of this library
+- [`example.c`](example.c): example usage of this library
 - [`build.bat`](build.bat): sample script to compile the example provided, and to show how to include and compile this library into another codebase
 
 
@@ -103,14 +103,15 @@ See [`types.h`](types.h).
 - `s` is for `signed`
 - `u` is for `unsigned`
 - `f` is for "floating-point number"
-- The number following is the type's width in bits
+- The number following is the type's width in bits  
+
 This is purely for convenience.
 
 ### Why not use printf, or the C runtime and standard library?
 - I like experimenting and understanding what it takes to build even the most simple things
 - I'm usually using only a small subset of features from the `printf`'s family of functions
 - This small library provides me with better control and understanding performance
-- I avoid using the C standard library and Windows C runtime, which often incur hidden performance hits or perform operations I don't need, and increase executable size significantly for small tools/libraries. Using the C runtime, compiling this library ([`example.c`](example.c) included) with `build.bat` results in a 106.5 KB executable. Without the C runtime, the executable shrinks down to 5.5 KB. The former can't fit into the L1 cache of an [Intel's Lion Cove](https://en.wikipedia.org/wiki/Lion_Cove#L0) CPU nor in that of an [AMD's Zen 5](https://en.wikipedia.org/wiki/Zen_5#L1) CPU, both from 2024. The later could fit in the L1 cache of an [Intel's i486](https://en.wikipedia.org/wiki/I486#Differences_between_i386_and_i486) CPU from 1989 or in that of an [AMD's K6](https://en.wikipedia.org/wiki/AMD_K6#Models) CPU from 1997. Isn't that great?
+- I avoid using the C standard library and Windows C runtime, which often incur hidden performance hits or perform operations I don't need, and increase executable size significantly for small tools/libraries. Using the C runtime, compiling this library (`example.c`) included) with `build.bat` results in a 106.5 KB executable. Without the C runtime, the executable shrinks down to 5.5 KB. The former can't fit into the L1 cache of an [Intel's Lion Cove](https://en.wikipedia.org/wiki/Lion_Cove#L0) CPU nor in that of an [AMD's Zen 5](https://en.wikipedia.org/wiki/Zen_5#L1) CPU, both from 2024. The later could fit in the L1 cache of an [Intel's i486](https://en.wikipedia.org/wiki/I486#Differences_between_i386_and_i486) CPU from 1989 or in that of an [AMD's K6](https://en.wikipedia.org/wiki/AMD_K6#Models) CPU from 1997. Isn't that great?
 
 ## License
 The code in this repository is released in the public domain. You are allowed to use the code in this repository freely.
