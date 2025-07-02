@@ -64,7 +64,7 @@ The code in this repository is inspired from
 - No dynamic allocations, the logs buffer is allocated on the stack
 - Offers output streams control (open, close, disable, enable, write)
   - Provides 1 console output which is either created or reused from the calling process, and set to display UTF-8-encoded characters
-  - Provides 1 ASCII or UTF-16 named file output, which is either created or opened, then appended to
+  - Provides 1 ASCII- or UTF-16-named file output, which is either created or opened, then appended to
 - Logging of fundamental types
   - Signed and unsigned integers up to 64-bit, in binary, decimal and hexadecimal format, with or without a pre-determined size in bits, digits or nibbles
   - 32-bit floating point numbers in binary, decimal and hexadecimal format, with or without a pre-determined size in bits or nibbles, or a pre-determined decimal fractional part size, with a few particularities:
