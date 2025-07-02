@@ -68,7 +68,7 @@ The code in this repository is inspired from
 - Logging of fundamental types
   - Signed and unsigned integers up to 64-bit, in binary, decimal and hexadecimal format, with or without a pre-determined size in bits, digits or nibbles
   - 32-bit floating point numbers in binary, decimal and hexadecimal format, with or without a pre-determined size in bits or nibbles, or a pre-determined decimal fractional part size, with a few particularities:
-    - Values outside of [-2^32 + 1, 2^32 - 1] are output as `-big` or `big`, depending on their sign (see rational in `log_dec_f32_number` comments, in [log.c](https://github.com/badsami/logs/log.c#L512-#L575))
+    - Values outside of [-2^32 + 1, 2^32 - 1] are output as `-big` or `big`, depending on their sign (see rational in [log_dec_f32_number() comments in log.c](https://github.com/badsami/logs/blob/main/logs.c#L512-#L575))
     - `-qnan`, `qnan`, `-snan`, `snan`, `-inf` or `inf` may be output for matching non-number values
     - `-0` will be converted to `0`
     - Without a predetermined size, 6 digits past the period are written to the output. This can be increased up to 9 (see `F32_DEC_FRAC_DEFAULT_STR_SIZE` and `F32_DEC_FRAC_MULT` in [types_max_str_size.h](types_max_str_size.h))
@@ -76,7 +76,7 @@ The code in this repository is inspired from
     - Values are written in full. Scientific notation and other notations are not used
   - ASCII, UTF-8 and UTF-16 characters, null-terminated, sized and literal compile-time strings
 - Compile-time defined logs buffer size through macro definition `/DLOGS_BUFFER_SIZE`, which defaults to 4 KB
-- Helpers to manage logs buffer memory, with [types_max_str_size.h](types_max_str_size.h) to estimate the maximum number of characters a fundamental type may be represented with, and with `logs_buffer_remaining_bytes()` in [log.c](https://github.com/badsami/logs/log.c#L184-#L190))
+- Helpers to manage logs buffer memory, with [types_max_str_size.h](types_max_str_size.h) to estimate the maximum number of characters a fundamental type may be represented with, and with [logs_buffer_remaining_bytes() in log.c](https://github.com/badsami/logs/blob/main/logs.c#L184-#L190))
 - Logs are turned off by default to prevent any accidental performance hit, and are enabled by defining the compile-time macro `LOGS_ENABLED` (setting it to `0` disables logs)
 
 Because this library gives control over the logs buffer size and when it should be written to enabled outputs, all functions, once called, assume there is enough space left in the logs buffer to append the content they are passed. You are in charge of choosing a log buffer size that is appropriate to your needs, and of calling logs_write() before the buffer become over-saturated.  
