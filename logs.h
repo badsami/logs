@@ -346,6 +346,7 @@ void log_hex_f32(f32 num);
 #  define log_ascii_ntstr(char_character)                          do { (void)(char_character); } while (0)
 #  define log_utf8_ntstr(str)                                      do { (void)(str); } while (0)
 #  define log_utf16_ntstr(str)                                     do { (void)(str); } while (0)
+#  define log_ntstr(str)                                           do { (void)(str); } while (0)
 #  define log_literal_str(str)                                     do { (void)(str); } while (0)
 #  define log_sized_bin_u64(num, bit_to_write_count)               do { (void)(num); (void)(bit_to_write_count); } while (0)
 #  define log_sized_bin_s8 (num, bit_to_write_count)               do { (void)(num); (void)(bit_to_write_count); } while (0)
