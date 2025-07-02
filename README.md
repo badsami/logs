@@ -1,5 +1,5 @@
 # Logs
-C buffered logging library. Format your logs into a buffer, then write them all at once to a console and/or a log file to reduce writes to storage.
+C buffered logging library. No C runtime, no C standard library, no dynamic allocation. Get your data formatted into a stack-allocated buffer of pre-determined size, then write it all at once to a console and/or a log file to minimise writes to persistent storage.
 Example (available in [`example.c`](example.c)):
 ```C
 #include "logs.h"
