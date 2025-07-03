@@ -1,5 +1,5 @@
 # Logs
-C buffered logging library. No C runtime, no C standard library, no dynamic allocation. Get your data formatted into a stack-allocated buffer of pre-determined size, then write it all at once to a console and/or a log file to minimise writes to persistent storage.
+C buffered logging library. No C runtime, no C standard library, no dynamic allocation. Get your data formatted into a stack-allocated buffer of pre-determined size, then write it all at once to a console and/or a file to minimise writes to persistent storage.
 Example (available in [`example.c`](example.c)):
 ```C
 #include "logs.h"
@@ -110,7 +110,7 @@ This is purely for convenience.
 - I like experimenting and understanding what it takes to build even the most simple things
 - I'm usually using only a small subset of features from the `printf`'s family of functions
 - This small library provides me with better control and understanding performance
-- I avoid using the C standard library and Windows C runtime, which often incur hidden performance hits or perform operations I don't need, and increase executable size significantly for small tools/libraries. Using the C runtime, compiling this library (`example.c`) included) with `build.bat` results in a 106.5 KB executable. Without the C runtime, the executable shrinks down to 5.5 KB. The former can't fit into the L1 cache of an [Intel's Lion Cove](https://en.wikipedia.org/wiki/Lion_Cove#L0) CPU nor in that of an [AMD's Zen 5](https://en.wikipedia.org/wiki/Zen_5#L1) CPU, both from 2024. The later could fit in the L1 cache of an [Intel's i486](https://en.wikipedia.org/wiki/I486#Differences_between_i386_and_i486) CPU from 1989 or in that of an [AMD's K6](https://en.wikipedia.org/wiki/AMD_K6#Models) CPU from 1997. Isn't that great?
+- I avoid using the C standard library and Windows C runtime, which often incur hidden performance hits or perform operations I don't need, and increase executable size significantly for small tools/libraries. Using the C runtime, compiling this library (`example.c` included) with `build.bat` results in a 106.5 KB executable. Without the C runtime, the executable shrinks down to 5.5 KB. The former can't fit into the L1 cache of an [Intel's Lion Cove](https://en.wikipedia.org/wiki/Lion_Cove#L0) CPU nor in that of an [AMD's Zen 5](https://en.wikipedia.org/wiki/Zen_5#L1) CPU, both from 2024. The later could fit in the L1 cache of an [Intel's i486](https://en.wikipedia.org/wiki/I486#Differences_between_i386_and_i486) CPU from 1989 or in that of an [AMD's K6](https://en.wikipedia.org/wiki/AMD_K6#Models) CPU from 1997. Isn't that incredible?
 
 ## License
 The code in this repository is released in the public domain. You are allowed to use the code in this repository freely.
