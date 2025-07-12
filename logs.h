@@ -132,6 +132,8 @@ void log_utf16_str(const WCHAR* str, u32 wchar_count);
   _Generic((str),                       \
            char*:        log_utf8_str,  \
            const char*:  log_utf8_str,  \
+           u8*:          log_utf8_str,  \
+           const u8*:    log_utf8_str,  \
            WCHAR*:       log_utf16_str, \
            const WCHAR*: log_utf16_str) \
            (str, count)
