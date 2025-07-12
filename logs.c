@@ -324,7 +324,7 @@ void log_sized_dec_s32(s32 num, u32 digit_to_write_count) { log_sized_dec_u64((u
 
 void log_sized_dec_s64(s64 num, u32 digit_to_write_count)
 {
-  s64 is_neg  = num < 0LLu;
+  s64 is_neg  = num < 0ULL;
   u64 pos_num = (num ^ -is_neg) + is_neg;
 
   logs.buffer[logs.buffer_end_idx] = '-'; // overwritten if unnecessary
@@ -345,8 +345,8 @@ void log_sized_dec_u64(u64 num, u32 digit_to_write_count)
   u8*       dest          = num_str_start + digit_to_write_count;
   while (dest > num_str_start)
   {
-    u64 quotient = num / 10LLu;
-    u8  digit    = (u8)(num - (quotient * 10LLu));
+    u64 quotient = num / 10ULL;
+    u8  digit    = (u8)(num - (quotient * 10ULL));
 
     dest -= 1;
     *dest = '0' + digit;
