@@ -9,7 +9,7 @@ set EXE_OUTPUT=logs.exe
 set VSWHERE_EXE="%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 
 REM If known, the path to VsDevCmd can be directly set to skip calling vswhere
-set VSDEVCMD=""
+set VSDEVCMD="%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat"
 
 REM Compilation options
 set COMP_ARCH=x64
