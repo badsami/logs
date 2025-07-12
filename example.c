@@ -31,17 +31,17 @@ void mainCRTStartup()
   }
 
   // Then write buffered logs to enabled outputs
-  logs_write();
+  logs_flush();
 
   // Write to specific outputs
   logs_disable_output(LOGS_CONSOLE_OUTPUT);
   log_literal_str("========== Logging session end ==========\n\n");
-  logs_write();
+  logs_flush();
   
   logs_enable_output(LOGS_CONSOLE_OUTPUT);
   logs_disable_output(LOGS_FILE_OUTPUT);
   log_literal_str(u8"\nLogs written to file ");
-  log_ntstr(logs_file_name);
+  log_null_terminated_str(logs_file_name);
 
   // Close outputs, implicitly flushing logs buffer to enabled outputs
   logs_close_file_output();

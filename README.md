@@ -28,17 +28,17 @@ void mainCRTStartup()
   }
 
   // Then write buffered logs to enabled outputs
-  logs_write();
+  logs_flush();
 
   // Write to specific outputs
   logs_disable_output(LOGS_CONSOLE_OUTPUT);
   log_literal_str("========== Logging session end ==========\n\n");
-  logs_write();
+  logs_flush();
   
   logs_enable_output(LOGS_CONSOLE_OUTPUT);
   logs_disable_output(LOGS_FILE_OUTPUT);
   log_literal_str(u8"\nLogs written to file ");
-  log_ntstr(logs_file_name);
+  log_null_terminated_str(logs_file_name);
 
   // Close outputs, implicitly flushing logs buffer to enabled outputs
   logs_close_file_output();
@@ -79,7 +79,7 @@ The code in this repository is inspired from
 - Logs are turned off by default to prevent any accidental performance hit, and are enabled by defining the compile-time macro `LOGS_ENABLED` (setting it to `0` disables logs)
 
 > [!NOTE]
-> Because this library gives control over the logs buffer size and when it should be written to enabled outputs, all functions, once called, assume there is enough space left in the logs buffer to append the content they are passed. You are in charge of choosing a log buffer size that is appropriate to your needs, and of calling `logs_write()` before the buffer becomes over-saturated.  
+> Because this library gives control over the logs buffer size and when it should be written to enabled outputs, all functions, once called, assume there is enough space left in the logs buffer to append the content they are passed. You are in charge of choosing a log buffer size that is appropriate to your needs, and of calling `logs_flush()` before the buffer becomes over-saturated.  
 
 > [!NOTE]
 > It is important to compile with [/utf-8](https://learn.microsoft.com/en-us/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8?view=msvc-170) if you are passing UTF-8 encoded characters and strings to the functions of this library.
