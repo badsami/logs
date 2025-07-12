@@ -5,7 +5,7 @@
 // /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\
 // None of the functions declared here perform checks to ensure there is enough space in the log
 // buffer. You are in charge of picking a log buffer size that is appropriate to your use-case, and
-// of calling logs_write() after appending your content to the log buffer
+// of calling logs_flush() after appending your content to the log buffer
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -86,14 +86,14 @@ void logs_disable_output(logs_output_idx output_idx);
 // Start writing logs to the output again (outputs, once open, are enabled by default)
 void logs_enable_output(logs_output_idx output_idx);
 
-// Write the content of the log buffer to enabled outputs
-void logs_write(void);
+// Write the content of the log buffer to enabled outputs, and set the log buffer end index to 0
+void logs_flush(void);
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Memory
 // Get the number of remaining available space in logs.buffer, in bytes
-u32 logs_buffer_remaining_bytes();
+u32 logs_buffer_remaining_bytes(void);
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -138,24 +138,24 @@ void log_utf16_str(const WCHAR* str, u32 wchar_count);
            const WCHAR*: log_utf16_str) \
            (str, count)
 
-// Append a null-termianted ("nt") chain of ASCII-encoded characters ("abc") to the log buffer.
+// Append a null-termianted chain of ASCII-encoded characters ("abc") to the log buffer.
 // char evaluates to char on Windows, and ASCII characters are encoded the same way in UTF-8
-#define log_ascii_ntstr(char_character) log_utf8_ntstr(char_character)
+#define log_ascii_null_terminated_str(char_character) log_utf8_null_terminated_str(char_character)
 
 
-// Append a null-terminated ("nt") chain of UTF-8-encoded characters (u8"Fluß") to the log buffer
-void log_utf8_ntstr(const char* str);
+// Append a null-terminated chain of UTF-8-encoded characters (u8"Fluß") to the log buffer
+void log_utf8_null_terminated_str(const char* str);
 
-// Append a null-terminated ("nt") chain of UTF-16-encoded characters (u"çéÖ", L"çéÖ") to the
-// log buffer
-void log_utf16_ntstr(const WCHAR* str);
+// Append a null-terminated chain of UTF-16-encoded characters (u"çéÖ", L"çéÖ") to the log
+// buffer
+void log_utf16_null_terminated_str(const WCHAR* str);
 
-#define log_ntstr(str)                    \
-  _Generic((str),                         \
-           char*:        log_utf8_ntstr,  \
-           const char*:  log_utf8_ntstr,  \
-           WCHAR*:       log_utf16_ntstr, \
-           const WCHAR*: log_utf16_ntstr) \
+#define log_null_terminated_str(str)                    \
+  _Generic((str),                                       \
+           char*:        log_utf8_null_terminated_str,  \
+           const char*:  log_utf8_null_terminated_str,  \
+           WCHAR*:       log_utf16_null_terminated_str, \
+           const WCHAR*: log_utf16_null_terminated_str) \
           (str)
 
 
@@ -335,7 +335,7 @@ void log_hex_f32(f32 num);
 #  define logs_close_file_output()                                 do { } while (0)
 #  define logs_disable_output(output_idx)                          do { (void)(output_idx); } while (0)
 #  define logs_enable_output(output_idx)                           do { (void)(output_idx); } while (0)
-#  define logs_write()                                             do { } while (0)
+#  define logs_flush()                                             do { } while (0)
 #  define logs_buffer_available_bytes()                            0u
 #  define log_ascii_char(char_character)                           do { (void)(char_character); } while (0)
 #  define log_utf8_character(character)                            do { (void)(character); } while (0)
@@ -345,10 +345,10 @@ void log_hex_f32(f32 num);
 #  define log_utf8_str(str, char_count)                            do { (void)(str); (void)(char_count); } while (0)
 #  define log_utf16_str(str, wchar_count)                          do { (void)(str); (void)(wchar_count); } while (0)
 #  define log_str(str, count)                                      do { (void)(str); (void)(count); } while (0)
-#  define log_ascii_ntstr(char_character)                          do { (void)(char_character); } while (0)
-#  define log_utf8_ntstr(str)                                      do { (void)(str); } while (0)
-#  define log_utf16_ntstr(str)                                     do { (void)(str); } while (0)
-#  define log_ntstr(str)                                           do { (void)(str); } while (0)
+#  define log_ascii_null_terminated_str(char_character)            do { (void)(char_character); } while (0)
+#  define log_utf8_null_terminated_str(str)                        do { (void)(str); } while (0)
+#  define log_utf16_null_terminated_str(str)                       do { (void)(str); } while (0)
+#  define log_null_terminated_str(str)                             do { (void)(str); } while (0)
 #  define log_literal_str(str)                                     do { (void)(str); } while (0)
 #  define log_sized_bin_u64(num, bit_to_write_count)               do { (void)(num); (void)(bit_to_write_count); } while (0)
 #  define log_sized_bin_s8 (num, bit_to_write_count)               do { (void)(num); (void)(bit_to_write_count); } while (0)

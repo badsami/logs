@@ -158,7 +158,7 @@ void logs_enable_output(logs_output_idx output_idx)
 }
 
 
-void logs_write(void)
+void logs_flush(void)
 {
   // Trust that the caller knows the log buffer is not empty
   // If an output is enabled, it is open. Parse the output state bits to select destination outputs
@@ -181,7 +181,7 @@ void logs_write(void)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Memory
-u32 logs_buffer_remaining_bytes()
+u32 logs_buffer_remaining_bytes(void)
 {
   s32 difference      = LOGS_BUFFER_SIZE - logs.buffer_end_idx;
   u32 remaining_bytes = (difference > 0) ? difference : 0;
@@ -244,7 +244,7 @@ void log_utf16_str(const WCHAR* str, u32 wchar_count)
 }
 
 
-void log_utf8_ntstr(const char* str)
+void log_utf8_null_terminated_str(const char* str)
 {
   char* dest      = (char*)(logs.buffer + logs.buffer_end_idx);
   char  character = *str;
@@ -257,11 +257,10 @@ void log_utf8_ntstr(const char* str)
   }
 }
 
-// Append a null-terminated ("nt") chain of UTF-16-encoded characters (u"çéÖ", L"çéÖ") to the
-// log buffer
-void log_utf16_ntstr(const WCHAR* str)
+
+void log_utf16_null_terminated_str(const WCHAR* str)
 {
-  // TODO: vVery much suboptimal 
+  // TODO: very much suboptimal 
   u32 wchar_count = 0u;
   while (str[wchar_count] != L'\0')
   {
