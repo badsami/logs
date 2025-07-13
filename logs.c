@@ -179,6 +179,8 @@ void logs_flush(void)
 }
 
 
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Memory
 u32 logs_buffer_remaining_bytes(void)
@@ -188,6 +190,8 @@ u32 logs_buffer_remaining_bytes(void)
 
   return remaining_bytes;
 }
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -271,6 +275,8 @@ void log_utf16_null_terminated_str(const WCHAR* str)
 }
 
 
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Binary number logging
 void log_sized_bin_s8 (s8  num, u32 bit_to_write_count) { log_sized_bin_u64((u64)num,      bit_to_write_count); }
@@ -312,6 +318,8 @@ void log_bin_u16(u16 num) { log_sized_bin_u64(num,           u32_bit_count(num))
 void log_bin_u32(u32 num) { log_sized_bin_u64(num,           u32_bit_count(num));         }
 void log_bin_u64(u64 num) { log_sized_bin_u64(num,           u64_bit_count(num));         }
 void log_bin_f32(f32 num) { log_sized_bin_u64(*(u32*)(&num), u32_bit_count(*(u32*)&num)); }
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -455,6 +463,7 @@ void log_sized_dec_f32(f32 num, u32 frac_size)
   }
 }
 
+
 // The number of digits required to represent a signed integer and its unsigned cast are equal
 void log_dec_s8 (s8  num) { log_sized_dec_s64(num, u32_digit_count((u32)num)); }
 void log_dec_s16(s16 num) { log_sized_dec_s64(num, u32_digit_count((u32)num)); }
@@ -586,6 +595,8 @@ void log_dec_f32(f32 num)
     log_dec_f32_nan_or_inf(num);
   }
 }
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
