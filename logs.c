@@ -58,7 +58,7 @@ void logs_open_console_output(void)
     {
       // This process doesn't have a console. Create a new one
       AllocConsole();
-      SetConsoleTitle("Logs");
+      SetConsoleTitleA("Logs");
 
       logs.console_original_output_code_page = 0u;
     }
@@ -107,12 +107,12 @@ void logs_open_file_output_ascii(const char* file_path)
   {
     const u32 SHARE_MODE = FILE_SHARE_READ | FILE_SHARE_WRITE;
     logs.outputs[LOGS_FILE_OUTPUT] = CreateFileA(file_path,        // lpFileName
-                                                FILE_APPEND_DATA, // dwDesiredAccess
-                                                SHARE_MODE,       // dwShareMode
-                                                0,                // lpSecurityAttributes
-                                                OPEN_ALWAYS,      // dwCreationDisposition
-                                                0,                // dwFlagsAndAttributes
-                                                0);               // hTemplateFile
+                                                 FILE_APPEND_DATA, // dwDesiredAccess
+                                                 SHARE_MODE,       // dwShareMode
+                                                 0,                // lpSecurityAttributes
+                                                 OPEN_ALWAYS,      // dwCreationDisposition
+                                                 0,                // dwFlagsAndAttributes
+                                                 0);               // hTemplateFile
     logs_enable_output(LOGS_FILE_OUTPUT);
   }
 }
