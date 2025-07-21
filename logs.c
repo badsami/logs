@@ -254,8 +254,9 @@ void log_utf8_null_terminated_str(const char* str)
   char  character = *str;
   while (character != '\0')
   {
-    *dest = character;
-    dest += 1;
+    logs.buffer[logs.buffer_end_idx] = character;
+    logs.buffer_end_idx += 1u;
+    
     str  += 1;
     character = *str;
   }
