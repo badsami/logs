@@ -98,8 +98,8 @@ u32 logs_buffer_remaining_bytes(void);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Characters & strings logging
-// Append a single ASCII character ('a') to the log buffer
-// char evaluates to char on Windows, and ASCII characters are encoded the same way in UTF-8
+// Append a single ASCII character ('a') to the log buffer.
+// ASCII characters are encoded the same way as UTF-8
 #define log_ascii_char(char_character) log_utf8_character(char_character)
 
 // Append a single UTF-8 code point ('\xC3') to the log buffer
@@ -118,55 +118,55 @@ void log_utf16_character(WCHAR character);
           (character)
 
 // Append a chain of ASCII-encoded characters ("abc") of predetermined to the log buffer.
-// char evaluates to char on Windows, and ASCII characters are encoded the same way in UTF-8
-#define log_ascii_str(char_character) log_utf8_str(char_character)
+// ASCII characters are encoded the same way as UTF-8
+#define log_sized_ascii_str(str, char_count) log_sized_utf8_str(str, char_count)
 
 // Append a chain of UTF-8-encoded characters (u8"Fluß") of predetermined size to the log buffer
-void log_utf8_str(const char* str, u32 char_count);
+void log_sized_utf8_str(const char* str, u32 char_count);
 
 // Append a chain of UTF-16-encoded characters (u"çéÖ", L"çéÖ") of predetermined size to the
 // log buffer
-void log_utf16_str(const WCHAR* str, u32 wchar_count);
+void log_sized_utf16_str(const WCHAR* str, u32 wchar_count);
 
-#define log_str(str, count)             \
-  _Generic((str),                       \
-           char*:        log_utf8_str,  \
-           const char*:  log_utf8_str,  \
-           u8*:          log_utf8_str,  \
-           const u8*:    log_utf8_str,  \
-           WCHAR*:       log_utf16_str, \
-           const WCHAR*: log_utf16_str) \
+#define log_sized_str(str, count)             \
+  _Generic((str),                             \
+           char*:        log_sized_utf8_str,  \
+           const char*:  log_sized_utf8_str,  \
+           u8*:          log_sized_utf8_str,  \
+           const u8*:    log_sized_utf8_str,  \
+           WCHAR*:       log_sized_utf16_str, \
+           const WCHAR*: log_sized_utf16_str) \
           (str, count)
 
 // Append a null-termianted chain of ASCII-encoded characters ("abc") to the log buffer.
-// char evaluates to char on Windows, and ASCII characters are encoded the same way in UTF-8
+// ASCII characters are encoded the same way as UTF-8
 #define log_ascii_null_terminated_str(char_character) log_utf8_null_terminated_str(char_character)
 
 
 // Append a null-terminated chain of UTF-8-encoded characters (u8"Fluß") to the log buffer
-void log_utf8_null_terminated_str(const char* str);
+void log_null_terminated_utf8_str(const char* str);
 
 // Append a null-terminated chain of UTF-16-encoded characters (u"çéÖ", L"çéÖ") to the log
 // buffer
-void log_utf16_null_terminated_str(const WCHAR* str);
+void log_null_terminated_utf16_str(const WCHAR* str);
 
 #define log_null_terminated_str(str)                    \
   _Generic((str),                                       \
-           char*:        log_utf8_null_terminated_str,  \
-           const char*:  log_utf8_null_terminated_str,  \
-           WCHAR*:       log_utf16_null_terminated_str, \
-           const WCHAR*: log_utf16_null_terminated_str) \
+           char*:        log_null_terminated_utf8_str,  \
+           const char*:  log_null_terminated_utf8_str,  \
+           WCHAR*:       log_null_terminated_utf16_str, \
+           const WCHAR*: log_null_terminated_utf16_str) \
           (str)
 
 
 // Append a literal string ("abc", u8"Fluß", L"çéÖ") whose size can be determined at
 // compile-time to the log buffer, without its final null terminator
-#define log_literal_str(str)            \
-  _Generic((str),                       \
-           char*:        log_utf8_str,  \
-           const char*:  log_utf8_str,  \
-           WCHAR*:       log_utf16_str, \
-           const WCHAR*: log_utf16_str) \
+#define log_literal_str(str)                  \
+  _Generic((str),                             \
+           char*:        log_sized_utf8_str,  \
+           const char*:  log_sized_utf8_str,  \
+           WCHAR*:       log_sized_utf16_str, \
+           const WCHAR*: log_sized_utf16_str) \
            (str, (sizeof(str) - sizeof(str[0])) / sizeof(str[0]))
 
 
@@ -341,13 +341,13 @@ void log_hex_f32(f32 num);
 #  define log_utf8_character(character)                            do { (void)(character); } while (0)
 #  define log_utf16_character(ucharacter)                          do { (void)(character); } while (0)
 #  define log_character(character)                                 do { (void)(character); } while (0)
-#  define log_ascii_str(char_character)                            do { (void)(char_character); } while (0)
-#  define log_utf8_str(str, char_count)                            do { (void)(str); (void)(char_count); } while (0)
-#  define log_utf16_str(str, wchar_count)                          do { (void)(str); (void)(wchar_count); } while (0)
+#  define log_sized_ascii_str(char_character)                      do { (void)(char_character); } while (0)
+#  define log_sized_utf8_str(str, char_count)                      do { (void)(str); (void)(char_count); } while (0)
+#  define log_sized_utf16_str(str, wchar_count)                    do { (void)(str); (void)(wchar_count); } while (0)
 #  define log_str(str, count)                                      do { (void)(str); (void)(count); } while (0)
-#  define log_ascii_null_terminated_str(char_character)            do { (void)(char_character); } while (0)
-#  define log_utf8_null_terminated_str(str)                        do { (void)(str); } while (0)
-#  define log_utf16_null_terminated_str(str)                       do { (void)(str); } while (0)
+#  define log_null_terminated_ascii_str(char_character)            do { (void)(char_character); } while (0)
+#  define log_null_terminated_utf8_str(str)                        do { (void)(str); } while (0)
+#  define log_null_terminated_utf16_str(str)                       do { (void)(str); } while (0)
 #  define log_null_terminated_str(str)                             do { (void)(str); } while (0)
 #  define log_literal_str(str)                                     do { (void)(str); } while (0)
 #  define log_sized_bin_u64(num, bit_to_write_count)               do { (void)(num); (void)(bit_to_write_count); } while (0)

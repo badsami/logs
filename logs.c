@@ -205,12 +205,12 @@ void log_utf8_character(char character)
 
 void log_utf16_character(WCHAR character)
 {
-  log_utf16_str(&character, 1u);
+  log_sized_utf16_str(&character, 1u);
 }
 
 
 // Append a chain of UTF-8-encoded characters (u8"Fluß") to the log buffer
-void log_utf8_str(const char* str, u32 char_count)
+void log_sized_utf8_str(const char* str, u32 char_count)
 {
   char* dest = (char*)(logs.buffer + logs.buffer_end_idx);
   
@@ -227,7 +227,7 @@ void log_utf8_str(const char* str, u32 char_count)
 
 
 // Append a chain of UTF-16-encoded characters (u"çéÖ", L"çéÖ") to the log buffer
-void log_utf16_str(const WCHAR* str, u32 wchar_count)
+void log_sized_utf16_str(const WCHAR* str, u32 wchar_count)
 {
   // None of the functions appending content to the logs buffer make sure there is enough space to
   // write to. Lie about the available space in the logs buffer
@@ -248,10 +248,9 @@ void log_utf16_str(const WCHAR* str, u32 wchar_count)
 }
 
 
-void log_utf8_null_terminated_str(const char* str)
+void log_null_terminated_utf8_str(const char* str)
 {
-  char* dest      = (char*)(logs.buffer + logs.buffer_end_idx);
-  char  character = *str;
+  char character = *str;
   while (character != '\0')
   {
     logs.buffer[logs.buffer_end_idx] = character;
@@ -263,7 +262,7 @@ void log_utf8_null_terminated_str(const char* str)
 }
 
 
-void log_utf16_null_terminated_str(const WCHAR* str)
+void log_null_terminated_utf16_str(const WCHAR* str)
 {
   // TODO: very much suboptimal 
   u32 wchar_count = 0u;
@@ -272,7 +271,7 @@ void log_utf16_null_terminated_str(const WCHAR* str)
     wchar_count += 1;
   }
 
-  log_utf16_str(str, wchar_count);
+  log_sized_utf16_str(str, wchar_count);
 }
 
 
