@@ -67,7 +67,7 @@ The code in this repository is inspired from
 - Logging of fundamental types
   - Signed and unsigned integers up to 64-bit, in binary, decimal and hexadecimal format, with or without a pre-determined size in bits, digits or nibbles
   - 32-bit floating point numbers in binary, decimal and hexadecimal format, with or without a pre-determined size in bits or nibbles, or a pre-determined decimal fractional part size, with a few particularities:
-    - Values outside of [-2^32 + 1, 2^32 - 1] are output as `-big` or `big`, depending on their sign (see rational in [log_dec_f32_number() comments in log.c](https://github.com/badsami/logs/blob/main/logs.c#L512-#L575))
+    - Values outside of [-2^32 + 1, 2^32 - 1] are output as `-big` or `big`, depending on their sign (see rational in [log_dec_f32_number() comments in log.c](https://github.com/badsami/logs/blob/main/logs.c#L520-L583))
     - `-qnan`, `qnan`, `-snan`, `snan`, `-inf` or `inf` may be output for matching non-number values
     - `-0` will be converted to `0`
     - Without a predetermined size, 6 digits past the period are written to the output. This can be increased up to 9 (see `F32_DEC_FRAC_DEFAULT_STR_SIZE` and `F32_DEC_FRAC_MULT` in [types_max_str_size.h](types_max_str_size.h))
