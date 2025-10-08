@@ -331,11 +331,11 @@ void log_sized_dec_s32(s32 num, u32 digit_to_write_count) { log_sized_dec_u64((u
 
 void log_sized_dec_s64(s64 num, u32 digit_to_write_count)
 {
-  s64 is_neg  = num < 0ULL;
-  u64 pos_num = (num ^ -is_neg) + is_neg;
+  u32 is_neg  = num < 0llu;
+  u64 pos_num = is_neg ? -num : num;
 
   logs.buffer[logs.buffer_end_idx] = '-'; // overwritten if unnecessary
-  logs.buffer_end_idx += (u32)(is_neg);
+  logs.buffer_end_idx += is_neg;
   
   log_sized_dec_u64(pos_num, digit_to_write_count);
 }
@@ -352,8 +352,8 @@ void log_sized_dec_u64(u64 num, u32 digit_to_write_count)
   u8*       dest          = num_str_start + digit_to_write_count;
   while (dest > num_str_start)
   {
-    u64 quotient = num / 10ULL;
-    u8  digit    = (u8)(num - (quotient * 10ULL));
+    u64 quotient = num / 10llu;
+    u8  digit    = (u8)(num - (quotient * 10llu));
 
     dest -= 1;
     *dest = '0' + digit;
@@ -464,15 +464,63 @@ void log_sized_dec_f32(f32 num, u32 frac_size)
 }
 
 
-// The number of digits required to represent a signed integer and its unsigned cast are equal
-void log_dec_s8 (s8  num) { log_sized_dec_s64(num, u32_digit_count((u32)num)); }
-void log_dec_s16(s16 num) { log_sized_dec_s64(num, u32_digit_count((u32)num)); }
-void log_dec_s32(s32 num) { log_sized_dec_s64(num, u32_digit_count((u32)num)); }
-void log_dec_s64(s64 num) { log_sized_dec_s64(num, u64_digit_count((u64)num)); }
-void log_dec_u8 (u8  num) { log_sized_dec_u64(num, u32_digit_count(num));      }
-void log_dec_u16(u16 num) { log_sized_dec_u64(num, u32_digit_count(num));      }
-void log_dec_u32(u32 num) { log_sized_dec_u64(num, u32_digit_count(num));      }
-void log_dec_u64(u64 num) { log_sized_dec_u64(num, u64_digit_count(num));      }
+void log_dec_s8 (s8  num) { log_dec_s32(num); }
+void log_dec_s16(s16 num) { log_dec_s32(num); }
+void log_dec_s32(s32 num)
+{
+  u32 is_neg  = num < 0ll;
+  u32 pos_num = (u32)(is_neg ? -num : num);
+
+  u8* num_str_start        = logs.buffer + logs.buffer_end_idx;
+  u32 digit_to_write_count = u32_digit_count(pos_num);
+  u32 char_to_write_count  = digit_to_write_count + is_neg;
+  u8* dest                 = num_str_start + char_to_write_count;
+  
+  *num_str_start = '-'; // will be overwritten if not needed
+  num_str_start += is_neg;
+  while (dest > num_str_start)
+  {
+    u32 quotient = pos_num / 10u;
+    u8  digit    = (u8)(pos_num - (quotient * 10u));
+
+    dest -= 1;
+    *dest = '0' + digit;
+    
+    pos_num = quotient;
+  }
+  
+  logs.buffer_end_idx += char_to_write_count;
+}
+
+void log_dec_s64(s64 num)
+{
+  u32 is_neg  = num < 0ll;
+  u64 pos_num = (u64)(is_neg ? -num : num);
+
+  u8* const num_str_start        = logs.buffer + logs.buffer_end_idx;
+  u32       digit_to_write_count = u64_digit_count(pos_num);
+  u32       char_to_write_count  = digit_to_write_count + is_neg;
+  u8*       dest                 = num_str_start + char_to_write_count;
+  
+  *num_str_start = '-'; // will be overwritten if not needed
+  while (dest > num_str_start)
+  {
+    u64 quotient = pos_num / 10llu;
+    u8  digit    = (u8)(pos_num - (quotient * 10llu));
+
+    dest -= 1;
+    *dest = '0' + digit;
+    
+    pos_num = quotient;
+  }
+  
+  logs.buffer_end_idx += char_to_write_count;
+}
+
+void log_dec_u8 (u8  num) { log_sized_dec_u64(num, u32_digit_count(num)); }
+void log_dec_u16(u16 num) { log_sized_dec_u64(num, u32_digit_count(num)); }
+void log_dec_u32(u32 num) { log_sized_dec_u64(num, u32_digit_count(num)); }
+void log_dec_u64(u64 num) { log_sized_dec_u64(num, u64_digit_count(num)); }
 
 
 
