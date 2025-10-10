@@ -140,7 +140,7 @@ void log_sized_utf16_str(const WCHAR* str, u32 wchar_count);
 
 // Append a null-termianted chain of ASCII-encoded characters ("abc") to the log buffer.
 // ASCII characters are encoded the same way as UTF-8
-#define log_ascii_null_terminated_str(char_character) log_utf8_null_terminated_str(char_character)
+#define log_null_terminated_ascii_str(char_character) log_null_terminated_utf8_str(char_character)
 
 
 // Append a null-terminated chain of UTF-8-encoded characters (u8"Fluß") to the log buffer
