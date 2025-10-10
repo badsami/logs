@@ -1,12 +1,10 @@
 #pragma once
 #include "types.h"
-#include "to_str_utilities.h"
 
 // /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\
 // None of the functions declared here perform checks to ensure there is enough space in the log
 // buffer. You are in charge of picking a log buffer size that is appropriate to your use-case, and
 // of calling logs_flush() after appending your content to the log buffer
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Data
