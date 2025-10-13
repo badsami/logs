@@ -169,6 +169,12 @@ void log_null_terminated_utf16_str(const WCHAR* str);
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+//// Non-alphanumeric types logging
+void    log_bool(u32 boolean);
+#define log_ptr(ptr) log_sized_hex_u64((u64)(ptr), 16u)
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Binary number logging
 void log_sized_bin_s8 (s8  num, u32 bit_to_write_count);
 void log_sized_bin_s16(s16 num, u32 bit_to_write_count);

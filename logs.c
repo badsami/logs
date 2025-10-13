@@ -278,6 +278,21 @@ void log_null_terminated_utf16_str(const WCHAR* str)
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+//// Non-alphanumeric types logging
+static const char* bool_str = "truefalse";
+void log_bool(u32 boolean)
+{
+  u32 is_false = (boolean == 0);
+  u32 offset   = is_false << 2; // 0 if (is_false == 0), 4 otherwise
+
+  const char* bool_str_start = bool_str + offset; // either starts at "true" or "false"
+  u32         char_count     = 4u + is_false; // strlen("true") = 4, strlen("false") = 5
+  log_sized_utf8_str(bool_str_start, char_count);
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Binary number logging
 void log_sized_bin_s8 (s8  num, u32 bit_to_write_count) { log_sized_bin_u64((u64)num,      bit_to_write_count); }
 void log_sized_bin_s16(s16 num, u32 bit_to_write_count) { log_sized_bin_u64((u64)num,      bit_to_write_count); }
@@ -466,6 +481,8 @@ void log_sized_dec_f32(f32 num, u32 frac_size)
 
 void log_dec_s8 (s8  num) { log_dec_s32(num); }
 void log_dec_s16(s16 num) { log_dec_s32(num); }
+
+
 void log_dec_s32(s32 num)
 {
   u32 is_neg  = num < 0ll;
@@ -492,6 +509,7 @@ void log_dec_s32(s32 num)
   logs.buffer_end_idx += char_to_write_count;
 }
 
+
 void log_dec_s64(s64 num)
 {
   u32 is_neg  = num < 0ll;
@@ -517,11 +535,11 @@ void log_dec_s64(s64 num)
   logs.buffer_end_idx += char_to_write_count;
 }
 
+
 void log_dec_u8 (u8  num) { log_sized_dec_u64(num, u32_digit_count(num)); }
 void log_dec_u16(u16 num) { log_sized_dec_u64(num, u32_digit_count(num)); }
 void log_dec_u32(u32 num) { log_sized_dec_u64(num, u32_digit_count(num)); }
 void log_dec_u64(u64 num) { log_sized_dec_u64(num, u64_digit_count(num)); }
-
 
 
 void log_dec_f32_nan_or_inf(f32 num)
