@@ -31,8 +31,8 @@ struct logs
   // Output handles
   void* outputs[LOGS_OUTPUT_COUNT];
 
-  // Index past the last character of the buffer
-  u32 buffer_end_idx;
+  // Index past the last character written to the buffer
+  u64 buffer_end_idx;
 
   // Meant to be used with logs_output_idx. 1 bit represents 1 output.
   // If the output's bit is 1, it is enabled, otherwise it is disabled
@@ -91,7 +91,7 @@ void logs_flush(void);
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Memory
 // Get the number of remaining available space in logs.buffer, in bytes
-u32 logs_buffer_remaining_bytes(void);
+u64 logs_buffer_remaining_bytes(void);
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -120,11 +120,11 @@ void log_utf16_character(WCHAR character);
 #define log_sized_ascii_str(str, char_count) log_sized_utf8_str(str, char_count)
 
 // Append a chain of UTF-8-encoded characters (u8"Fluß") of predetermined size to the log buffer
-void log_sized_utf8_str(const char* str, u32 char_count);
+void log_sized_utf8_str(const char* str, u64 char_count);
 
 // Append a chain of UTF-16-encoded characters (u"çéÖ", L"çéÖ") of predetermined size to the
 // log buffer
-void log_sized_utf16_str(const WCHAR* str, u32 wchar_count);
+void log_sized_utf16_str(const WCHAR* str, s32 wchar_count);
 
 #define log_sized_str(str, count)             \
   _Generic((str),                             \
@@ -176,15 +176,15 @@ void    log_bool(u32 boolean);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Binary number logging
-void log_sized_bin_s8 (s8  num, u32 bit_to_write_count);
-void log_sized_bin_s16(s16 num, u32 bit_to_write_count);
-void log_sized_bin_s32(s32 num, u32 bit_to_write_count);
-void log_sized_bin_s64(s64 num, u32 bit_to_write_count);
-void log_sized_bin_u8 (u8  num, u32 bit_to_write_count);
-void log_sized_bin_u16(u16 num, u32 bit_to_write_count);
-void log_sized_bin_u32(u32 num, u32 bit_to_write_count);
-void log_sized_bin_u64(u64 num, u32 bit_to_write_count);
-void log_sized_bin_f32(f32 num, u32 bit_to_write_count);
+void log_sized_bin_s8 (s8  num, u64 bit_to_write_count);
+void log_sized_bin_s16(s16 num, u64 bit_to_write_count);
+void log_sized_bin_s32(s32 num, u64 bit_to_write_count);
+void log_sized_bin_s64(s64 num, u64 bit_to_write_count);
+void log_sized_bin_u8 (u8  num, u64 bit_to_write_count);
+void log_sized_bin_u16(u16 num, u64 bit_to_write_count);
+void log_sized_bin_u32(u32 num, u64 bit_to_write_count);
+void log_sized_bin_u64(u64 num, u64 bit_to_write_count);
+void log_sized_bin_f32(f32 num, u64 bit_to_write_count);
 
 #define log_sized_bin_num(num, bit_to_write_count) \
   _Generic((num),                                   \
@@ -225,17 +225,17 @@ void log_bin_f32(f32 num);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Decimal number logging
-void log_sized_dec_s8 (s8  num, u32 digit_to_write_count);
-void log_sized_dec_s16(s16 num, u32 digit_to_write_count);
-void log_sized_dec_s32(s32 num, u32 digit_to_write_count);
-void log_sized_dec_s64(s64 num, u32 digit_to_write_count);
-void log_sized_dec_u8 (u8  num, u32 digit_to_write_count);
-void log_sized_dec_u16(u16 num, u32 digit_to_write_count);
-void log_sized_dec_u32(u32 num, u32 digit_to_write_count);
-void log_sized_dec_u64(u64 num, u32 digit_to_write_count);
+void log_sized_dec_s8 (s8  num, u64 digit_to_write_count);
+void log_sized_dec_s16(s16 num, u64 digit_to_write_count);
+void log_sized_dec_s32(s32 num, u64 digit_to_write_count);
+void log_sized_dec_s64(s64 num, u64 digit_to_write_count);
+void log_sized_dec_u8 (u8  num, u64 digit_to_write_count);
+void log_sized_dec_u16(u16 num, u64 digit_to_write_count);
+void log_sized_dec_u32(u32 num, u64 digit_to_write_count);
+void log_sized_dec_u64(u64 num, u64 digit_to_write_count);
 
-void log_sized_dec_f32_number(f32 num, u32 frac_digit_to_write_count);
-void log_sized_dec_f32(f32 num, u32 frac_digit_to_write_count);
+void log_sized_dec_f32_number(f32 num, u64 frac_digit_to_write_count);
+void log_sized_dec_f32(f32 num, u64 frac_digit_to_write_count);
 
 
 #define log_sized_dec_num(num, digit_to_write_count) \
@@ -282,15 +282,15 @@ void log_dec_f32(f32 num);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Hexadecimal number logging
-void log_sized_hex_s8 (s8  num, u32 nibble_to_write_count);
-void log_sized_hex_s16(s16 num, u32 nibble_to_write_count);
-void log_sized_hex_s32(s32 num, u32 nibble_to_write_count);
-void log_sized_hex_s64(s64 num, u32 nibble_to_write_count);
-void log_sized_hex_u8 (u8  num, u32 nibble_to_write_count);
-void log_sized_hex_u16(u16 num, u32 nibble_to_write_count);
-void log_sized_hex_u32(u32 num, u32 nibble_to_write_count);
-void log_sized_hex_u64(u64 num, u32 nibble_to_write_count);
-void log_sized_hex_f32(f32 num, u32 nibble_to_write_count);
+void log_sized_hex_s8 (s8  num, u64 nibble_to_write_count);
+void log_sized_hex_s16(s16 num, u64 nibble_to_write_count);
+void log_sized_hex_s32(s32 num, u64 nibble_to_write_count);
+void log_sized_hex_s64(s64 num, u64 nibble_to_write_count);
+void log_sized_hex_u8 (u8  num, u64 nibble_to_write_count);
+void log_sized_hex_u16(u16 num, u64 nibble_to_write_count);
+void log_sized_hex_u32(u32 num, u64 nibble_to_write_count);
+void log_sized_hex_u64(u64 num, u64 nibble_to_write_count);
+void log_sized_hex_f32(f32 num, u64 nibble_to_write_count);
 
 #define log_sized_hex_num(num, nibble_to_write_count) \
   _Generic((num),                                     \

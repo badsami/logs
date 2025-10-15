@@ -18,7 +18,7 @@ static void logs_close_output(logs_output_idx output_idx)
   if (logs.buffer_end_idx != 0 && output_was_enabled)
   {
     // Flush buffered content to the output before closing it
-    WriteFile(logs.outputs[output_idx], logs.buffer, logs.buffer_end_idx, 0, 0);
+    WriteFile(logs.outputs[output_idx], logs.buffer, (u32)logs.buffer_end_idx, 0, 0);
     
     // If there are no other enabled outputs, the content of the log buffer is no longer needed
     u32 any_output_open = (logs.outputs_state_bits != 0);
@@ -168,7 +168,7 @@ void logs_flush(void)
   {
     if (outputs_mask & 0b1)
     {
-      WriteFile(logs.outputs[idx], logs.buffer, logs.buffer_end_idx, 0, 0);
+      WriteFile(logs.outputs[idx], logs.buffer, (u32)logs.buffer_end_idx, 0, 0);
     }
     
     idx++;
@@ -183,10 +183,10 @@ void logs_flush(void)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Memory
-u32 logs_buffer_remaining_bytes(void)
+u64 logs_buffer_remaining_bytes(void)
 {
-  s32 difference      = LOGS_BUFFER_SIZE - logs.buffer_end_idx;
-  u32 remaining_bytes = (difference > 0) ? difference : 0;
+  s64 difference      = LOGS_BUFFER_SIZE - logs.buffer_end_idx;
+  u64 remaining_bytes = (difference > 0ll) ? difference : 0ll;
 
   return remaining_bytes;
 }
@@ -209,8 +209,7 @@ void log_utf16_character(WCHAR character)
 }
 
 
-// Append a chain of UTF-8-encoded characters (u8"Fluß") to the log buffer
-void log_sized_utf8_str(const char* str, u32 char_count)
+void log_sized_utf8_str(const char* str, u64 char_count)
 {
   char* dest = (char*)(logs.buffer + logs.buffer_end_idx);
   
@@ -225,9 +224,7 @@ void log_sized_utf8_str(const char* str, u32 char_count)
   logs.buffer_end_idx += char_count;
 }
 
-
-// Append a chain of UTF-16-encoded characters (u"çéÖ", L"çéÖ") to the log buffer
-void log_sized_utf16_str(const WCHAR* str, u32 wchar_count)
+void log_sized_utf16_str(const WCHAR* str, s32 wchar_count)
 {
   // None of the functions appending content to the logs buffer make sure there is enough space to
   // write to. Lie about the available space in the logs buffer
@@ -235,14 +232,14 @@ void log_sized_utf16_str(const WCHAR* str, u32 wchar_count)
 
   // TODO: implement our own WideCharToMultiByte()
   char* dest = (char*)(logs.buffer + logs.buffer_end_idx);
-  s32 bytes_written = WideCharToMultiByte(CP_UTF8,         // CodePage,
-                                          0,               // dwFlags,
-                                          str,             // lpWideCharStr
-                                          wchar_count,     // cchWideChar 
-                                          dest,            // lpMultiByteStr
-                                          AVAILABLE_BYTES, // cbMultiByte
-                                          0,               // lpDefaultChar
-                                          0);              // lpUsedDefaultChar
+  s32 bytes_written = WideCharToMultiByte(CP_UTF8,          // CodePage,
+                                          0,                // dwFlags,
+                                          str,              // lpWideCharStr
+                                          wchar_count,      // cchWideChar 
+                                          dest,             // lpMultiByteStr
+                                          AVAILABLE_BYTES,  // cbMultiByte
+                                          0,                // lpDefaultChar
+                                          0);               // lpUsedDefaultChar
 
   logs.buffer_end_idx += bytes_written;
 }
@@ -254,7 +251,7 @@ void log_null_terminated_utf8_str(const char* str)
   while (character != '\0')
   {
     logs.buffer[logs.buffer_end_idx] = character;
-    logs.buffer_end_idx += 1u;
+    logs.buffer_end_idx += 1ull;
     
     str  += 1;
     character = *str;
@@ -264,14 +261,7 @@ void log_null_terminated_utf8_str(const char* str)
 
 void log_null_terminated_utf16_str(const WCHAR* str)
 {
-  // TODO: very much suboptimal 
-  u32 wchar_count = 0u;
-  while (str[wchar_count] != L'\0')
-  {
-    wchar_count += 1;
-  }
-
-  log_sized_utf16_str(str, wchar_count);
+  log_sized_utf16_str(str, -1);
 }
 
 
@@ -282,11 +272,11 @@ void log_null_terminated_utf16_str(const WCHAR* str)
 static const char* bool_str = "truefalse";
 void log_bool(u32 boolean)
 {
-  u32 is_false = (boolean == 0);
-  u32 offset   = is_false << 2; // 0 if (is_false == 0), 4 otherwise
+  u64 is_false = (boolean == 0);
+  u64 offset   = is_false << 2; // 0 if (is_false == 0), 4 otherwise
 
   const char* bool_str_start = bool_str + offset; // either starts at "true" or "false"
-  u32         char_count     = 4u + is_false; // strlen("true") = 4, strlen("false") = 5
+  u64         char_count     = 4ull + is_false;   // length("true") = 4, length("false") = 5
   log_sized_utf8_str(bool_str_start, char_count);
 }
 
@@ -294,16 +284,16 @@ void log_bool(u32 boolean)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Binary number logging
-void log_sized_bin_s8 (s8  num, u32 bit_to_write_count) { log_sized_bin_u64((u64)num,      bit_to_write_count); }
-void log_sized_bin_s16(s16 num, u32 bit_to_write_count) { log_sized_bin_u64((u64)num,      bit_to_write_count); }
-void log_sized_bin_s32(s32 num, u32 bit_to_write_count) { log_sized_bin_u64((u64)num,      bit_to_write_count); }
-void log_sized_bin_s64(s64 num, u32 bit_to_write_count) { log_sized_bin_u64((u64)num,      bit_to_write_count); }
-void log_sized_bin_u8 (u8  num, u32 bit_to_write_count) { log_sized_bin_u64(num,           bit_to_write_count); }
-void log_sized_bin_u16(u16 num, u32 bit_to_write_count) { log_sized_bin_u64(num,           bit_to_write_count); }
-void log_sized_bin_u32(u32 num, u32 bit_to_write_count) { log_sized_bin_u64(num,           bit_to_write_count); }
+void log_sized_bin_s8 (s8  num, u64 bit_to_write_count) { log_sized_bin_u64((u64)num, bit_to_write_count); }
+void log_sized_bin_s16(s16 num, u64 bit_to_write_count) { log_sized_bin_u64((u64)num, bit_to_write_count); }
+void log_sized_bin_s32(s32 num, u64 bit_to_write_count) { log_sized_bin_u64((u64)num, bit_to_write_count); }
+void log_sized_bin_s64(s64 num, u64 bit_to_write_count) { log_sized_bin_u64((u64)num, bit_to_write_count); }
+void log_sized_bin_u8 (u8  num, u64 bit_to_write_count) { log_sized_bin_u64(num,      bit_to_write_count); }
+void log_sized_bin_u16(u16 num, u64 bit_to_write_count) { log_sized_bin_u64(num,      bit_to_write_count); }
+void log_sized_bin_u32(u32 num, u64 bit_to_write_count) { log_sized_bin_u64(num,      bit_to_write_count); }
 
 
-void log_sized_bin_u64(u64 num, u32 bit_to_write_count)
+void log_sized_bin_u64(u64 num, u64 bit_to_write_count)
 {
   u8* const num_str_start = logs.buffer + logs.buffer_end_idx;
   u8*       dest          = num_str_start + bit_to_write_count;
@@ -321,7 +311,7 @@ void log_sized_bin_u64(u64 num, u32 bit_to_write_count)
 }
 
 
-void log_sized_bin_f32(f32 num, u32 bit_to_write_count) { log_sized_bin_u64(*(u32*)(&num), bit_to_write_count); }
+void log_sized_bin_f32(f32 num, u64 bit_to_write_count) { log_sized_bin_u64(*(u32*)(&num), bit_to_write_count); }
 
 
 void log_bin_s8 (s8  num) { log_sized_bin_u64((u64)num,      u32_bit_count((u32)num));    }
@@ -339,14 +329,14 @@ void log_bin_f32(f32 num) { log_sized_bin_u64(*(u32*)(&num), u32_bit_count(*(u32
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Decimal number logging
-void log_sized_dec_s8 (s8  num, u32 digit_to_write_count) { log_sized_dec_u64((u64)num, digit_to_write_count); }
-void log_sized_dec_s16(s16 num, u32 digit_to_write_count) { log_sized_dec_u64((u64)num, digit_to_write_count); }
-void log_sized_dec_s32(s32 num, u32 digit_to_write_count) { log_sized_dec_u64((u64)num, digit_to_write_count); }
+void log_sized_dec_s8 (s8  num, u64 digit_to_write_count) { log_sized_dec_u64((u64)num, digit_to_write_count); }
+void log_sized_dec_s16(s16 num, u64 digit_to_write_count) { log_sized_dec_u64((u64)num, digit_to_write_count); }
+void log_sized_dec_s32(s32 num, u64 digit_to_write_count) { log_sized_dec_u64((u64)num, digit_to_write_count); }
 
 
-void log_sized_dec_s64(s64 num, u32 digit_to_write_count)
+void log_sized_dec_s64(s64 num, u64 digit_to_write_count)
 {
-  u32 is_neg  = num < 0llu;
+  u64 is_neg  = num < 0ull;
   u64 pos_num = is_neg ? -num : num;
 
   logs.buffer[logs.buffer_end_idx] = '-'; // overwritten if unnecessary
@@ -356,19 +346,19 @@ void log_sized_dec_s64(s64 num, u32 digit_to_write_count)
 }
 
 
-void log_sized_dec_u8 (u8  num, u32 digit_to_write_count) { log_sized_dec_u64(num, digit_to_write_count); }
-void log_sized_dec_u16(u16 num, u32 digit_to_write_count) { log_sized_dec_u64(num, digit_to_write_count); }
-void log_sized_dec_u32(u32 num, u32 digit_to_write_count) { log_sized_dec_u64(num, digit_to_write_count); }
+void log_sized_dec_u8 (u8  num, u64 digit_to_write_count) { log_sized_dec_u64(num, digit_to_write_count); }
+void log_sized_dec_u16(u16 num, u64 digit_to_write_count) { log_sized_dec_u64(num, digit_to_write_count); }
+void log_sized_dec_u32(u32 num, u64 digit_to_write_count) { log_sized_dec_u64(num, digit_to_write_count); }
 
 
-void log_sized_dec_u64(u64 num, u32 digit_to_write_count)
+void log_sized_dec_u64(u64 num, u64 digit_to_write_count)
 {
   u8* const num_str_start = logs.buffer + logs.buffer_end_idx;
   u8*       dest          = num_str_start + digit_to_write_count;
   while (dest > num_str_start)
   {
-    u64 quotient = num / 10llu;
-    u8  digit    = (u8)(num - (quotient * 10llu));
+    u64 quotient = num / 10ull;
+    u8  digit    = (u8)(num - (quotient * 10ull));
 
     dest -= 1;
     *dest = '0' + digit;
@@ -394,7 +384,7 @@ static const f32 f32_frac_size_to_mul[F32_DEC_FRAC_MAX_STR_SIZE + 1] =
   1000000000.f
 };
 
-void log_sized_dec_f32_number(f32 num, u32 frac_digit_to_write_count)
+void log_sized_dec_f32_number(f32 num, u64 frac_digit_to_write_count)
 {
   u32 is_neg = num < 0.f;
   
@@ -444,7 +434,7 @@ void log_sized_dec_f32_number(f32 num, u32 frac_digit_to_write_count)
 
         // There can never be more fractional digits than the configured maximum allowed.
         // F32_DEC_FRAC_MAX_STR_SIZE is defined in types_max_str_size.h
-        u32 num_frac_digit_to_write_count = (frac_digit_to_write_count < F32_DEC_FRAC_MAX_STR_SIZE) ?
+        u64 num_frac_digit_to_write_count = (frac_digit_to_write_count < F32_DEC_FRAC_MAX_STR_SIZE) ?
                                        frac_digit_to_write_count : F32_DEC_FRAC_MAX_STR_SIZE;
         f32 num_frac_ext = num_frac * f32_frac_size_to_mul[num_frac_digit_to_write_count];
         u32 num_frac_int = (u32)num_frac_ext;
@@ -465,7 +455,7 @@ void log_sized_dec_f32_number(f32 num, u32 frac_digit_to_write_count)
 }
 
 
-void log_sized_dec_f32(f32 num, u32 frac_size)
+void log_sized_dec_f32(f32 num, u64 frac_size)
 {
   u32 is_a_number = f32_is_a_number(num);
   if (is_a_number)
@@ -489,8 +479,8 @@ void log_dec_s32(s32 num)
   u32 pos_num = (u32)(is_neg ? -num : num);
 
   u8* num_str_start        = logs.buffer + logs.buffer_end_idx;
-  u32 digit_to_write_count = u32_digit_count(pos_num);
-  u32 char_to_write_count  = digit_to_write_count + is_neg;
+  u64 digit_to_write_count = u32_digit_count(pos_num);
+  u64 char_to_write_count  = digit_to_write_count + is_neg;
   u8* dest                 = num_str_start + char_to_write_count;
   
   *num_str_start = '-'; // will be overwritten if not needed
@@ -512,19 +502,19 @@ void log_dec_s32(s32 num)
 
 void log_dec_s64(s64 num)
 {
-  u32 is_neg  = num < 0ll;
+  u64 is_neg  = num < 0ll;
   u64 pos_num = (u64)(is_neg ? -num : num);
 
   u8* const num_str_start        = logs.buffer + logs.buffer_end_idx;
-  u32       digit_to_write_count = u64_digit_count(pos_num);
-  u32       char_to_write_count  = digit_to_write_count + is_neg;
+  u64       digit_to_write_count = u64_digit_count(pos_num);
+  u64       char_to_write_count  = digit_to_write_count + is_neg;
   u8*       dest                 = num_str_start + char_to_write_count;
   
   *num_str_start = '-'; // will be overwritten if not needed
   while (dest > num_str_start)
   {
-    u64 quotient = pos_num / 10llu;
-    u8  digit    = (u8)(pos_num - (quotient * 10llu));
+    u64 quotient = pos_num / 10ull;
+    u8  digit    = (u8)(pos_num - (quotient * 10ull));
 
     dest -= 1;
     *dest = '0' + digit;
@@ -579,13 +569,13 @@ void log_dec_f32_nan_or_inf(f32 num)
     dest += 4;
   }
 
-  logs.buffer_end_idx += (u32)(dest - num_str_start);
+  logs.buffer_end_idx += (u64)(dest - num_str_start);
 }
 
 
 void log_dec_f32_number(f32 num)
 {
-  u32 is_neg = num < 0.f;
+  u64 is_neg = num < 0.f;
   
   logs.buffer[logs.buffer_end_idx] = '-'; // overwritten if unnecessary
   logs.buffer_end_idx += is_neg;
@@ -669,16 +659,16 @@ void log_dec_f32(f32 num)
 //// Hexadecimal number logging
 static const char hex_digits[] = "0123456789ABCDEF";
 
-void log_sized_hex_s8 (s8  num, u32 nibble_to_write_count) { log_sized_hex_u64((u64)num,    nibble_to_write_count); }
-void log_sized_hex_s16(s16 num, u32 nibble_to_write_count) { log_sized_hex_u64((u64)num,    nibble_to_write_count); }
-void log_sized_hex_s32(s32 num, u32 nibble_to_write_count) { log_sized_hex_u64((u64)num,    nibble_to_write_count); }
-void log_sized_hex_s64(s64 num, u32 nibble_to_write_count) { log_sized_hex_u64((u64)num,    nibble_to_write_count); }
-void log_sized_hex_u8 (u8  num, u32 nibble_to_write_count) { log_sized_hex_u64(num,         nibble_to_write_count); }
-void log_sized_hex_u16(u16 num, u32 nibble_to_write_count) { log_sized_hex_u64(num,         nibble_to_write_count); }
-void log_sized_hex_u32(u32 num, u32 nibble_to_write_count) { log_sized_hex_u64(num,         nibble_to_write_count); }
+void log_sized_hex_s8 (s8  num, u64 nibble_to_write_count) { log_sized_hex_u64((u64)num, nibble_to_write_count); }
+void log_sized_hex_s16(s16 num, u64 nibble_to_write_count) { log_sized_hex_u64((u64)num, nibble_to_write_count); }
+void log_sized_hex_s32(s32 num, u64 nibble_to_write_count) { log_sized_hex_u64((u64)num, nibble_to_write_count); }
+void log_sized_hex_s64(s64 num, u64 nibble_to_write_count) { log_sized_hex_u64((u64)num, nibble_to_write_count); }
+void log_sized_hex_u8 (u8  num, u64 nibble_to_write_count) { log_sized_hex_u64(num,      nibble_to_write_count); }
+void log_sized_hex_u16(u16 num, u64 nibble_to_write_count) { log_sized_hex_u64(num,      nibble_to_write_count); }
+void log_sized_hex_u32(u32 num, u64 nibble_to_write_count) { log_sized_hex_u64(num,      nibble_to_write_count); }
 
 
-void log_sized_hex_u64(u64 num, u32 nibble_to_write_count)
+void log_sized_hex_u64(u64 num, u64 nibble_to_write_count)
 {
   u8* const num_str_start = logs.buffer + logs.buffer_end_idx;
   u8*       dest          = num_str_start + nibble_to_write_count;
@@ -696,7 +686,7 @@ void log_sized_hex_u64(u64 num, u32 nibble_to_write_count)
 }
 
 
-void log_sized_hex_f32(f32 num, u32 nibble_to_write_count) { log_sized_hex_u64(*(u32*)&num, nibble_to_write_count); }
+void log_sized_hex_f32(f32 num, u64 nibble_to_write_count) { log_sized_hex_u64(*(u32*)&num, nibble_to_write_count); }
 
 
 void log_hex_s8 (s8  num) { log_sized_hex_u64((u64)num,    u32_nibble_count((u32)num));    }
