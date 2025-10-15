@@ -6,18 +6,18 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Intrinsics wrapper
-u32 bsr32(u32 num);
-u32 bsr64(u64 num);
+u64 bsr32(u32 num);
+u64 bsr64(u64 num);
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Numerals count in a number
-u32 u32_digit_count(u32 num);
-u32 u64_digit_count(u64 num);
-u32 u32_bit_count(u32 num);
-u32 u64_bit_count(u64 num);
-u32 u32_nibble_count(u32 num);
-u32 u64_nibble_count(u64 num);
+u64 u32_digit_count(u32 num);
+u64 u64_digit_count(u64 num);
+u64 u32_bit_count(u32 num);
+u64 u64_bit_count(u64 num);
+u64 u32_nibble_count(u32 num);
+u64 u64_nibble_count(u64 num);
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
