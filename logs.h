@@ -1,10 +1,25 @@
+// This logging API offers a way to control:
+// 1. how various data types are formatted to strings and appended to a buffer of fixed size
+// 2. when to flush/write the content of the buffer, which empties the buffer
+// 3. which outputs (console or file, currently) the buffer is flushed/written to
+//
+// Control over logs memory management is deferred to users and provided through:
+// - global and custommizable log buffer compile-time size
+// - global access to the logs struct instance
+// - logs_buffer_remaining_bytes()
+// - logs_flush()
+//
+// None of the functions below check whether enough space is available in the buffer before
+// appending content to it. It is advised to tweak LOGS_BUFFER_SIZE to a value that's appropriate
+// to your use-case (typically to the size of your biggest "chunk" of logs), either through compiler
+// flags (-DLOGS_BUFFER_SIZE=<your size>) or by changing its default size (see below).
+//
+// Functions with a name starting with "logs_" (e.g. logs_open_console_output()) manage the general
+// logging context. Function with a name starting with "log_" (e.g. log_dec_u32()) format and append
+// data to the global logs buffer. Generic macros are provided to make writing logging code a little
+// easier (e.g. log_dec_num() can be passed a signed 16-bit integer just as well as a 32-bit float)
 #pragma once
 #include "types.h"
-
-// /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\
-// None of the functions declared here perform checks to ensure there is enough space in the log
-// buffer. You are in charge of picking a log buffer size that is appropriate to your use-case, and
-// of calling logs_flush() after appending your content to the log buffer
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Data
@@ -25,7 +40,7 @@ typedef enum logs_output_idx logs_output_idx;
 
 struct logs
 {
-  // Characters storage, encoded as UTF-8 or ASCII
+  // Characters storage, encoded as UTF-8
   u8 buffer[LOGS_BUFFER_SIZE];
 
   // Output handles
@@ -168,10 +183,21 @@ void log_null_terminated_utf16_str(const WCHAR* str);
            (str, (sizeof(str) - sizeof(str[0])) / sizeof(str[0]))
 
 
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Non-alphanumeric types logging
 void    log_bool(u32 boolean);
 #define log_ptr(ptr) log_sized_hex_u64((u64)(ptr), 16u)
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//// Compounds logging
+void log_last_windows_error(void);
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -187,16 +213,16 @@ void log_sized_bin_u64(u64 num, u64 bit_to_write_count);
 void log_sized_bin_f32(f32 num, u64 bit_to_write_count);
 
 #define log_sized_bin_num(num, bit_to_write_count) \
-  _Generic((num),                                   \
-           s8:  log_sized_bin_s8,                   \
-           s16: log_sized_bin_s16,                  \
-           s32: log_sized_bin_s32,                  \
-           s64: log_sized_bin_s64,                  \
-           u8:  log_sized_bin_u8,                   \
-           u16: log_sized_bin_u16,                  \
-           u32: log_sized_bin_u32,                  \
-           u64: log_sized_bin_u64,                  \
-           f32: log_sized_bin_f32)                  \
+  _Generic((num),                                  \
+           s8:  log_sized_bin_s8,                  \
+           s16: log_sized_bin_s16,                 \
+           s32: log_sized_bin_s32,                 \
+           s64: log_sized_bin_s64,                 \
+           u8:  log_sized_bin_u8,                  \
+           u16: log_sized_bin_u16,                 \
+           u32: log_sized_bin_u32,                 \
+           u64: log_sized_bin_u64,                 \
+           f32: log_sized_bin_f32)                 \
           (num, bit_to_write_count)
 
 void log_bin_s8 (s8  num);
@@ -340,7 +366,7 @@ void log_hex_f32(f32 num);
 #  define logs_disable_output(output_idx)                          do { (void)(output_idx); } while (0)
 #  define logs_enable_output(output_idx)                           do { (void)(output_idx); } while (0)
 #  define logs_flush()                                             do { } while (0)
-#  define logs_buffer_available_bytes()                            0u
+#  define logs_buffer_remaining_bytes()                            0
 #  define log_ascii_char(char_character)                           do { (void)(char_character); } while (0)
 #  define log_utf8_character(character)                            do { (void)(character); } while (0)
 #  define log_utf16_character(ucharacter)                          do { (void)(character); } while (0)
@@ -356,6 +382,7 @@ void log_hex_f32(f32 num);
 #  define log_literal_str(str)                                     do { (void)(str); } while (0)
 #  define log_bool(boolean)                                        do { (void)(boolean); } while (0)
 #  define log_ptr(ptr)                                             do { (void)(ptr); } while (0)
+#  define log_last_windows_error()                                 do { } while (0)
 #  define log_sized_bin_s8(num, bit_to_write_count)                do { (void)(num); (void)(bit_to_write_count); } while (0)
 #  define log_sized_bin_s16(num, bit_to_write_count)               do { (void)(num); (void)(bit_to_write_count); } while (0)
 #  define log_sized_bin_s32(num, bit_to_write_count)               do { (void)(num); (void)(bit_to_write_count); } while (0)
