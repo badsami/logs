@@ -53,8 +53,8 @@ void logs_open_console_output(void)
   if (logs.outputs[LOGS_CONSOLE_OUTPUT] == 0)
   {
     // If this process already has a console, this will not allocate a new console
-    s32 success = AttachConsole(ATTACH_PARENT_PROCESS);
-    if (success == 0 && GetLastError() == ERROR_INVALID_HANDLE)
+    BOOL success = AttachConsole(ATTACH_PARENT_PROCESS);
+    if ((success == 0) && (GetLastError() == ERROR_INVALID_HANDLE))
     {
       // This process doesn't have a console. Create a new one
       AllocConsole();
@@ -227,7 +227,7 @@ void log_sized_utf8_str(const char* str, u64 char_count)
 void log_sized_utf16_str(const WCHAR* str, s32 wchar_count)
 {
   // None of the functions appending content to the logs buffer make sure there is enough space to
-  // write to. Lie about the available space in the logs buffer
+  // write to. Lie about the available space in the logs buffer to remain consistent
   const s32 AVAILABLE_BYTES = ~(1 << 31);
 
   // TODO: implement our own WideCharToMultiByte()
@@ -270,15 +270,61 @@ void log_null_terminated_utf16_str(const WCHAR* str)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Non-alphanumeric types logging
 static const char* bool_str = "truefalse";
+
 void log_bool(u32 boolean)
 {
   u64 is_false = (boolean == 0);
-  u64 offset   = is_false << 2; // 0 if (is_false == 0), 4 otherwise
+  u64 offset   = is_false << 2; // 4 if (boolean == 0), 0 otherwise
 
   const char* bool_str_start = bool_str + offset; // either starts at "true" or "false"
   u64         char_count     = 4ull + is_false;   // length("true") = 4, length("false") = 5
   log_sized_utf8_str(bool_str_start, char_count);
 }
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//// Compounds logging
+void log_last_windows_error(void)
+{
+  const DWORD flags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
+
+  // Can be obtained either from winnt.h, or through "Windows Language Code Identifier (LCID)
+  // Reference", version 16.0 (23rd April 2024), page 14:
+  // https://winprotocoldoc.z19.web.core.windows.net/MS-LCID/[MS-LCID].pdf#page=14
+  const WORD  en_us_lang_id = 0x0409;
+
+  // None of the functions appending content to the logs buffer make sure there is enough space to
+  // write to. Lie about the available space in the logs buffer to remain consistent
+  const DWORD max_bytes = 64000; // maximum allowed by FormatMessage()
+
+  u32 last_error = GetLastError();
+  log_literal_str("Last Windows error: ");
+  log_dec_u32(last_error);
+  log_literal_str(", ");
+
+  char* dest = (char*)(logs.buffer + logs.buffer_end_idx);
+
+  DWORD char_written = FormatMessageA(flags,         // dwFlags
+                                      0,             // lpSource
+                                      last_error,    // dwMessageId
+                                      en_us_lang_id, // dwLanguageId
+                                      dest,          // lpBuffer
+                                      max_bytes,     // nSize
+                                      0);            // Arguments
+  if (char_written == 0)
+  {
+    // Something went wrong, fallback
+    log_literal_str("couldn't get error description)");
+  }
+  else
+  {
+    // Messages finish with a carriage return + linefeed. Both are removed
+    logs.buffer_end_idx += char_written - 2;
+  }
+}
+
 
 
 
