@@ -195,6 +195,8 @@ void    log_bool(u32 boolean);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Compounds logging
+// Retrieve the last Windows API error and log its decimal code and matching description as:
+// "Last Windows error: <decimal error code>, <error description>"
 void log_last_windows_error(void);
 
 
