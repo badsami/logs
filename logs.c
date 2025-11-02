@@ -52,11 +52,11 @@ void logs_open_console_output(void)
 {
   if (logs.outputs[LOGS_CONSOLE_OUTPUT] == 0)
   {
-    // If this process already has a console, this will not allocate a new console
-    BOOL success = AttachConsole(ATTACH_PARENT_PROCESS);
-    if ((success == 0) && (GetLastError() == ERROR_INVALID_HANDLE))
+    const BOOL success    = AttachConsole(ATTACH_PARENT_PROCESS);
+    const u32  last_error = GetLastError();
+    if ((success == 0) && (last_error != ERROR_ACCESS_DENIED))
     {
-      // This process doesn't have a console. Create a new one
+      // There is no console to borrow, or something went wrong. Create a new console
       AllocConsole();
       SetConsoleTitleA("Logs");
 
@@ -64,6 +64,7 @@ void logs_open_console_output(void)
     }
     else
     {
+      // An existing console is attached
       logs.console_original_output_code_page = GetConsoleOutputCP();
     }
 
@@ -224,6 +225,7 @@ void log_sized_utf8_str(const char* str, u64 char_count)
   logs.buffer_end_idx += char_count;
 }
 
+
 void log_sized_utf16_str(const WCHAR* str, s32 wchar_count)
 {
   // None of the functions appending content to the logs buffer make sure there is enough space to
@@ -232,14 +234,14 @@ void log_sized_utf16_str(const WCHAR* str, s32 wchar_count)
 
   // TODO: implement our own WideCharToMultiByte()
   char* dest = (char*)(logs.buffer + logs.buffer_end_idx);
-  s32 bytes_written = WideCharToMultiByte(CP_UTF8,          // CodePage,
-                                          0,                // dwFlags,
-                                          str,              // lpWideCharStr
-                                          wchar_count,      // cchWideChar 
-                                          dest,             // lpMultiByteStr
-                                          AVAILABLE_BYTES,  // cbMultiByte
-                                          0,                // lpDefaultChar
-                                          0);               // lpUsedDefaultChar
+  s32 bytes_written = WideCharToMultiByte(CP_UTF8,         // CodePage,
+                                          0,               // dwFlags,
+                                          str,             // lpWideCharStr
+                                          wchar_count,     // cchWideChar 
+                                          dest,            // lpMultiByteStr
+                                          AVAILABLE_BYTES, // cbMultiByte
+                                          0,               // lpDefaultChar
+                                          0);              // lpUsedDefaultChar
 
   logs.buffer_end_idx += bytes_written;
 }
@@ -273,11 +275,14 @@ static const char* bool_str = "truefalse";
 
 void log_bool(u32 boolean)
 {
-  u64 is_false = (boolean == 0);
-  u64 offset   = is_false << 2; // 4 if (boolean == 0), 0 otherwise
+  const u64 is_false = (boolean == 0);
+  const u64 offset   = is_false << 2; // 4 if (boolean == 0), 0 otherwise
 
-  const char* bool_str_start = bool_str + offset; // either starts at "true" or "false"
-  u64         char_count     = 4ull + is_false;   // length("true") = 4, length("false") = 5
+  // Starts either at the 't' of "true" or the 'f' of "false"
+  const char* bool_str_start = bool_str + offset;
+
+  // length("true") = 4, length("false") = 5, is_false = 0 or 1
+  const u64 char_count  = 4 + is_false;   
   log_sized_utf8_str(bool_str_start, char_count);
 }
 
@@ -293,7 +298,7 @@ void log_last_windows_error(void)
   // Can be obtained either from winnt.h, or through "Windows Language Code Identifier (LCID)
   // Reference", version 16.0 (23rd April 2024), page 14:
   // https://winprotocoldoc.z19.web.core.windows.net/MS-LCID/[MS-LCID].pdf#page=14
-  const WORD  en_us_lang_id = 0x0409;
+  const WORD en_us_lang_id = 0x0409;
 
   // None of the functions appending content to the logs buffer make sure there is enough space to
   // write to. Lie about the available space in the logs buffer to remain consistent
