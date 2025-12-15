@@ -1,5 +1,5 @@
 # Logs
-C buffered logging library for Windows. No C runtime, no C standard library, no dynamic allocation. Get your data formatted into a stack-allocated buffer of pre-determined size, then write it all at once to a console and/or a file to minimize input/output traffic.
+C buffered logging library for Windows. No C runtime, no C standard library, no dynamic allocation. Get your data formatted into a stack-allocated buffer of pre-determined size, then write it all at once to a console and/or a file to minimize output traffic.
 Example (available in [`example.c`](example.c)):
 ```C
 #include "logs.h"
