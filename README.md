@@ -67,15 +67,21 @@ The code in this repository is inspired from
 - Logging of fundamental types
   - Signed and unsigned integers up to 64-bit, in binary, decimal and hexadecimal format, with or without a pre-determined size in bits, digits or nibbles
   - 32-bit floating point numbers in binary, decimal and hexadecimal format, with or without a pre-determined size in bits or nibbles, or a pre-determined decimal fractional part size, with a few particularities:
+    - No rounding is performed on the integer and fractional part
     - Values outside of [-2^32 + 1, 2^32 - 1] are output as `-big` or `big`, depending on their sign (see rational in [log_dec_f32_number() comments in log.c](https://github.com/badsami/logs/blob/main/logs.c#L520-L583))
     - `-qnan`, `qnan`, `-snan`, `snan`, `-inf` or `inf` may be output for matching non-number values
     - `-0` will be converted to `0`
-    - Without a predetermined size, 6 digits past the period are written to the output. This can be increased up to 9 (see `F32_DEC_FRAC_DEFAULT_STR_SIZE` and `F32_DEC_FRAC_MULT` in [types_max_str_size.h](types_max_str_size.h))
-    - When passing a fixed fractional part size in digits that exceeds 9, the fractional part will be truncated to 9 digits (see `F32_DEC_FRAC_MAX_STR_SIZE` in [types_max_str_size.h](types_max_str_size.h))
+    - Without a predetermined size, 6 digits past the period are written to the output. This can be increased up to 9 (see `F32_DEC_FRAC_DEFAULT_STR_SIZE` and `F32_DEC_FRAC_MULT` in [logs.h](logs.h))
+    - When passing a fixed fractional part size in digits that exceeds 9, the fractional part will be truncated to 9 digits (see `F32_DEC_FRAC_MAX_STR_SIZE` in [logs.h](logs.h))
     - Values are written in full. Scientific notation and other notations are not used
   - ASCII, UTF-8 and UTF-16 characters, null-terminated, sized and literal compile-time strings
+  - Booleans
+  - Pointers
+- Logging of miscellaneous compounds of numbers and characters:
+  - The last Win32 error, preceeded by a message, followed by the error's description
+  - Count of bytes using decimal or binary unit prefixes, with 2 fractional digits (no rounding is performed)
 - Compile-time defined logs buffer size through macro definition `/DLOGS_BUFFER_SIZE`, which defaults to 4 KB
-- Helpers to manage logs buffer memory, with [types_max_str_size.h](types_max_str_size.h) to estimate the maximum number of characters a fundamental type may be represented with, and with [logs_buffer_remaining_bytes()](https://github.com/badsami/logs/blob/main/logs.c#L184-#L190)
+- Helpers to manage logs buffer memory, with compile-time constants in [logs.h](logs.h) to estimate the maximum number of characters a fundamental type may be represented with, and with [logs_buffer_remaining_bytes()](https://github.com/badsami/logs/blob/main/logs.c#L186-#L192)
 - Logs are turned off by default to prevent any accidental performance hit, and are enabled by defining the compile-time macro `LOGS_ENABLED` (setting it to `0` disables logs)
 
 > [!NOTE]
@@ -86,8 +92,8 @@ The code in this repository is inspired from
 
 
 ## Repository files
-- [`logs.h`](logs.h) / [`logs.c`](logs.c): logs output management, fundamental types formatting and buffering, logs buffer consumption helper
-- [`to_str_utilities.h`](to_str_utilities.h) / [`to_str_utilities.c`](to_str_utilities.c): helpers to categorise and efficiently convert numbers to characters
+- [`logs.h`](logs.h) / [`logs.c`](logs.c): logs output management, fundamental types formatting and buffering, logs buffer consumption helpers
+- [`to_str_utilities.h`](to_str_utilities.h) / [`to_str_utilities.c`](to_str_utilities.c): helpers to categorize and efficiently convert numbers to characters
 - [`types.h`](types.h): custom typedefs, for convenience
 - [`example.c`](example.c): example usage of this library
 - [`build.bat`](build.bat): sample script to compile the example provided, and to show how to include and compile this library into another codebase
