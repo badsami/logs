@@ -1,5 +1,5 @@
 # Logs
-C buffered logging library. No C runtime, no C standard library, no dynamic allocation. Get your data formatted into a stack-allocated buffer of pre-determined size, then write it all at once to a console and/or a file to minimise writes to persistent storage.
+C buffered logging library for Windows. Format data into a buffer of pre-determined size on the stack, then write it all at once to selected outputs. No C runtime, no C standard library, no dynamic allocation, minimal system calls and output traffic.
 Example (available in [`example.c`](example.c)):
 ```C
 #include "logs.h"
@@ -68,19 +68,17 @@ The code in this repository is inspired from
   - Signed and unsigned integers up to 64-bit, in binary, decimal and hexadecimal format, with or without a pre-determined size in bits, digits or nibbles
   - 32-bit floating point numbers in binary, decimal and hexadecimal format, with or without a pre-determined size in bits or nibbles, or a pre-determined decimal fractional part size, with a few particularities:
     - No rounding is performed on the integer and fractional part
-    - Values outside of [-2^32 + 1, 2^32 - 1] are output as `-big` or `big`, depending on their sign (see rational in [log_dec_f32_number() comments in log.c](https://github.com/badsami/logs/blob/main/logs.c#L520-L583))
+    - Values outside of [-2^32 + 1, 2^32 - 1] are output as `-big` or `big`, depending on their sign (see rational in [log_dec_f32_number() comments in log.c](https://github.com/badsami/logs/blob/main/logs.c#L711-L773))
     - `-qnan`, `qnan`, `-snan`, `snan`, `-inf` or `inf` may be output for matching non-number values
     - `-0` will be converted to `0`
     - Without a predetermined size, 6 digits past the period are written to the output. This can be increased up to 9 (see `F32_DEC_FRAC_DEFAULT_STR_SIZE` and `F32_DEC_FRAC_MULT` in [logs.h](logs.h))
     - When passing a fixed fractional part size in digits that exceeds 9, the fractional part will be truncated to 9 digits (see `F32_DEC_FRAC_MAX_STR_SIZE` in [logs.h](logs.h))
     - Values are written in full. Scientific notation and other notations are not used
   - ASCII, UTF-8 and UTF-16 characters, null-terminated, sized and literal compile-time strings
-  - Booleans
-  - Pointers
 - Logging of miscellaneous compounds of numbers and characters:
   - The last Win32 error, preceeded by a message, followed by the error's description
   - Count of bytes using decimal or binary unit prefixes, with 2 fractional digits (no rounding is performed)
-- Compile-time defined logs buffer size through macro definition `/DLOGS_BUFFER_SIZE`, which defaults to 4 KB
+- Compile-time defined logs buffer size through macro definition `/DLOGS_BUFFER_SIZE`, which defaults to 4 KiB
 - Helpers to manage logs buffer memory, with compile-time constants in [logs.h](logs.h) to estimate the maximum number of characters a fundamental type may be represented with, and with [logs_buffer_remaining_bytes()](https://github.com/badsami/logs/blob/main/logs.c#L186-#L192)
 - Logs are turned off by default to prevent any accidental performance hit, and are enabled by defining the compile-time macro `LOGS_ENABLED` (setting it to `0` disables logs)
 
@@ -92,7 +90,7 @@ The code in this repository is inspired from
 
 
 ## Repository files
-- [`logs.h`](logs.h) / [`logs.c`](logs.c): logs output management, fundamental types formatting and buffering, logs buffer consumption helpers
+- [`logs.h`](logs.h) / [`logs.c`](logs.c): logs output management, fundamental types formatting and buffering, logs buffer occupancy helper
 - [`to_str_utilities.h`](to_str_utilities.h) / [`to_str_utilities.c`](to_str_utilities.c): helpers to categorize and efficiently convert numbers to characters
 - [`types.h`](types.h): custom typedefs, for convenience
 - [`example.c`](example.c): example usage of this library
@@ -104,10 +102,12 @@ The code in this repository is inspired from
 - I like experimenting and understanding what it takes to build even the most simple things
 - I'm usually using only a small subset of features from the `printf`'s family of functions
 - This small library provides me with clearer, more explicit control over logs and their outputs
-- I avoid using the C standard library and Windows C runtime, which often incur hidden performance hits or perform operations I don't need, and increase executable size significantly for small tools/libraries. Using the C runtime, compiling this library (`example.c` included) with `build.bat` results in a 106.5 KB executable. Without the C runtime, the executable shrinks down to 5.5 KB. The former can't fit into the L1 cache of an [Intel's Lion Cove](https://en.wikipedia.org/wiki/Lion_Cove#L0) CPU nor in that of an [AMD's Zen 5](https://en.wikipedia.org/wiki/Zen_5#L1) CPU, both from 2024. The latter could fit in the L1 cache of an [Intel's i486](https://en.wikipedia.org/wiki/I486#Differences_between_i386_and_i486) CPU from 1989 or in that of an [AMD's K6](https://en.wikipedia.org/wiki/AMD_K6#Models) CPU from 1997. Isn't that incredible?
+- I avoid using the C standard library and Windows C runtime, which often incur hidden performance hits or perform operations I don't need, and increase executable size significantly for small tools/libraries.
+  - Using WIndows C runtime, compiling this library (`example.c` included) with `build.bat` results in a 106.5 KB executable. It cannot fit into the L1 instruction cache of an [Intel's Lion Cove](https://en.wikipedia.org/wiki/Lion_Cove#L0) CPU nor in that of an [AMD's Zen 5](https://en.wikipedia.org/wiki/Zen_5#L1) CPU, both from 2024
+  - Without the C runtime, the executable shrinks down to 5.5 KB, meaning it could fit in the L1 cache of an [Intel's i486](https://en.wikipedia.org/wiki/I486#Differences_between_i386_and_i486) CPU from 1989 or in that of an [AMD's K6](https://en.wikipedia.org/wiki/AMD_K6#Models) CPU from 1997. Isn't that incredible?
 
 ### Why support Windows only?
-This is the operating system I'm most familiar with, and Wine makes it easy to run code targeted at Windows on Linux.
+This is the operating system I'm most familiar with, and Wine makes it easy to run code targeted at Windows on Linux. But I'm interested in making this little library available on Linux too.
 
 ### `s32`? `u64`?
 See [`types.h`](types.h).  
