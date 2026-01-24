@@ -1,6 +1,6 @@
 // Compilation command lines (inside a x64 Native Tools Command Prompt for VS):
 // 
-//   cl.exe /nologo /DLOGS_ENABLED /std:c11 /utf-8 to_str_utilities.c logs.c example.c /link /subsystem:console /entry:mainCRTStartup /nodefaultlib /out:example.exe kernel32.lib
+//   cl.exe /nologo /DLOGS_ENABLED /std:c11 /utf-8 to_str_utilities.c logs.c example.c /link /subsystem:console /entry:mainCRTStartup /nodefaultlib kernel32.lib
 #include "logs.h"
 
 __declspec(dllimport) void __stdcall ExitProcess(u32);

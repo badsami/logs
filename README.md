@@ -48,7 +48,7 @@ void mainCRTStartup()
 }
 ```
 
-You can compile this example yourself by running [`build.bat`](build.bat), or from a x64 Native Tools Command Prompt for VS by running `cl.exe /DLOGS_ENABLED /std:c11 /utf-8 to_str_utilities.c logs.c example.c /link /subsystem:console /entry:mainCRTStartup /nodefaultlib /out:example.exe kernel32.lib`  
+You can compile this example yourself by running [`build.bat`](build.bat), or from a x64 Native Tools Command Prompt for VS by running `cl.exe /DLOGS_ENABLED /std:c11 /utf-8 to_str_utilities.c logs.c example.c /link /subsystem:console /entry:mainCRTStartup /nodefaultlib kernel32.lib`  
 (requires Visual Studio Build Tools or the Native Desktop workload).  
 
 The code in this repository is inspired from
