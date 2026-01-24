@@ -475,6 +475,8 @@ void log_hex_f32(f32 num);
 #  define log_literal_str(str)                                     do { (void)(str); } while (0)
 #  define log_bool(boolean)                                        do { (void)(boolean); } while (0)
 #  define log_ptr(ptr)                                             do { (void)(ptr); } while (0)
+#  define log_byte_count_dec_unit(byte_count)                      do { (void)(byte_count); } while (0)
+#  define log_byte_count_bin_unit(byte_count)                      do { (void)(byte_count); } while (0)
 #  define log_last_windows_error()                                 do { } while (0)
 #  define log_sized_bin_s8(num, bit_to_write_count)                do { (void)(num); (void)(bit_to_write_count); } while (0)
 #  define log_sized_bin_s16(num, bit_to_write_count)               do { (void)(num); (void)(bit_to_write_count); } while (0)
