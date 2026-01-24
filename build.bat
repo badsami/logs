@@ -24,14 +24,15 @@ set COMP_FLAGS=/nologo               ^
                /O2                   ^
                /std:c11              ^
                /utf-8
-set LINK_FLAGS=/link                 ^
-               /subsystem:console    ^
-               /entry:mainCRTStartup ^
-               /nodefaultlib         ^
-               /opt:icf              ^
-               /opt:ref              ^
-               /incremental:no       ^
-               /fixed                ^
+set LINK_FLAGS=/link                   ^
+               /emittoolversioninfo:no ^
+               /NOCOFFGRPINFO          ^
+               /subsystem:console      ^
+               /entry:mainCRTStartup   ^
+               /nodefaultlib           ^
+               /opt:ref                ^
+               /incremental:no         ^
+               /fixed                  ^
                /out:%BUILD_DIR%\%EXE_OUTPUT%
 set SOURCES=to_str_utilities.c ^
             logs.c             ^
