@@ -1,7 +1,6 @@
 #if defined(LOGS_ENABLED) && (LOGS_ENABLED != 0)
 #include "logs.h"
 #include "to_str_utilities.h"
-#include "types_max_str_size.h"
 
 #define _WIN32_WINNT 0x0501 // ATTACH_PARENT_PROCESS
 #include <Windows.h>
@@ -291,6 +290,92 @@ void log_bool(u32 boolean)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Compounds logging
+static const u64 unit_multipliers[] =
+{
+  // Maybe it's a road. Perhaps a flame? Or a witch hat! A reverse lightning bolt even!
+  1,
+  1000, // K
+  1000000, // M
+  1000000000, // G
+  1000000000000ull, // T
+  1000000000000000ull, // P
+  1000000000000000000ull // E
+};
+
+static const char dec_unit_prefixes[7] = {0, 'K', 'M', 'G', 'T', 'P', 'E'};
+
+void log_byte_count_dec_unit(u64 byte_count)
+{
+  // Log the integer part
+  const u64 digit_count          = u64_digit_count(byte_count); // in [1; 20]
+  const u64 unit_idx             = (digit_count - 1) / 3; // in [0; 6]
+  const u64 unit_mul             = unit_multipliers[unit_idx];
+  const u64 int_byte_count       = byte_count / unit_mul; // has 1 to 3 digits
+  const u64 int_byte_digit_count = digit_count - (unit_idx * 3);
+
+  log_sized_dec_u64(int_byte_count, int_byte_digit_count);
+
+  // Log the fractional part (if necessary)
+  const u32 byte_count_ge_1000 = byte_count >= 1000;
+  if (byte_count_ge_1000)
+  {
+    const u64 byte_count_remainder = byte_count - (int_byte_count * unit_mul);
+    const u64 frac_byte_count      = (BYTE_COUNT_FRAC_DIV * byte_count_remainder) / unit_mul;
+    log_character('.');
+    log_sized_dec_u64(frac_byte_count, BYTE_COUNT_FRAC_SIZE);
+  }
+
+  // Log the unit prefix and the unit itself
+  // ' ' [+ unit prefix] + 'B' = 2 mandatory + 1 optional characters
+  u8* const dest              = logs.buffer + logs.buffer_end_idx;
+  const u64 b_char_idx        = 1 + byte_count_ge_1000;
+  const u64 suffix_char_count = 2 + byte_count_ge_1000;
+
+  dest[0]          = ' ';
+  dest[1]          = dec_unit_prefixes[unit_idx]; // overwritten if unnecessary
+  dest[b_char_idx] = 'B';
+
+  logs.buffer_end_idx += suffix_char_count;
+}
+
+
+void log_byte_count_bin_unit(u64 byte_count)
+{
+  // Log the integer part
+  const u64 msb_idx        = bsr64(byte_count | 0b1);
+  const u64 prefix_idx     = msb_idx / 10;
+  const u8  mul_shift      = (u8)(prefix_idx * 10);
+  const u32 int_byte_count = (u32)(byte_count >> mul_shift);
+  log_dec_u32(int_byte_count);
+
+  // Log the fractional part (if necessary)
+  const u32 byte_count_ge_1024 = byte_count >= 1024;
+  if (byte_count_ge_1024)
+  {
+    const u64 byte_count_remainder = byte_count - (int_byte_count << mul_shift);
+    const u64 unit_mul             = 1ull << mul_shift;
+    const u64 frac_byte_count      = (BYTE_COUNT_FRAC_DIV * byte_count_remainder) / unit_mul;
+    log_character('.');
+    log_sized_dec_u64(frac_byte_count, BYTE_COUNT_FRAC_SIZE);
+  }
+
+  // Log the unit prefix and the unit itself
+  // ' ' [+ unit prefix + 'i'] + 'B' = 2 mandatory + 2 optional characters
+  u8* const dest              = logs.buffer + logs.buffer_end_idx;
+  const u64 b_char_offset     = byte_count_ge_1024 * 2;
+  const u64 suffix_char_count = 2 + b_char_offset;
+  const u64 i_char_idx        = 1 + byte_count_ge_1024;
+  const u64 b_char_idx        = 1 + b_char_offset;
+
+  dest[0]          = ' ';
+  dest[1]          = dec_unit_prefixes[prefix_idx]; // overwritten if unnecessary
+  dest[i_char_idx] = 'i'; // overwritten if unnecessary
+  dest[b_char_idx] = 'B';
+
+  logs.buffer_end_idx += suffix_char_count;
+}
+
+
 void log_last_windows_error(void)
 {
   const DWORD flags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
@@ -445,15 +530,16 @@ void log_sized_dec_f32_number(f32 num, u64 frac_digit_to_write_count)
   // Absolute values equal or greater to 8 388 608 are likely better represented as a s32 or s64
   // than as a 32-bit floating-point value (thereafter referred to as "f32"), for two reasons:
   // 
-  // - Range of values: f32 values can be as large as +/- 3.4 x 10^38. I believe such large values
-  // are never needed in video games. If they are, s32 can represent values up to +/- 2.15 x 10^9
-  // and s64 can represent values up to +/- 9.22 x 10^18 instead, which I think would cover any
-  // game programmer's needs
+  // 1. Range of values: f32 values can be as large as +/- 3.4 x 10^38. I've never needed to
+  // represent values that large as a f32. If they are ever necessary to you, I believe s32 and s64
+  // are better fits because they can represent values up to +/- 2.15 x 10^9 and +/- 9.22 x 10^18
+  // respectively, which might cover your needs. Otherwise, changing scale (i.e. meter to lightyear)
+  // might be a better option because of reason #2.
   // 
-  // - Precision: starting at 8 388 608 and beyond, f32 values cannot have a fractional part.
+  // 2. Precision: starting at 8 388 608 and beyond, f32 values cannot have a fractional part.
   // Starting at 16 777 216 and beyond, adding 1 to a f32 value doesn't change it. The fractional
   // part is not very significant at this magnitude, but s32 and s64 retain a precision of 1 on the
-  // full range of values they cover
+  // full range of values they cover.
   //
   // Nonetheless, 8 388 608 needs 23 bits to be represented, which would require a u32. So the full
   // range of the u32 type (+/- [0; 4 294 967 296]) may as well be supported, adding an extra
@@ -466,10 +552,8 @@ void log_sized_dec_f32_number(f32 num, u64 frac_digit_to_write_count)
     
     if (num < 8388608.f)
     {
-      // The same way values as large as +/- 3.4 x 10^38 are, in my view, never needed, I believe 
-      // precision under 0.000001 is also never needed. 0.000001 is precise enough:
-      // - if 1.0 = 1 meter,  0.000001 = 1 micrometer
-      // - if 1.0 = 1 radian, 0.000001 = 1 / 6 283 185th of a circle = 0.000057 degrees
+      // The same way values I've never needed to represent very large f32 values, I believe 
+      // representing values under 0.000001 (without changing units) should never be needed
       f32 num_rounded = (f32)num_int;
       f32 num_frac    = num - num_rounded;
       if (num_frac >= 0.000001f)
@@ -484,9 +568,9 @@ void log_sized_dec_f32_number(f32 num, u64 frac_digit_to_write_count)
         //   u8  max_frac_digit_count = 150u - unbiased_exp;
 
         // There can never be more fractional digits than the configured maximum allowed.
-        // F32_DEC_FRAC_MAX_STR_SIZE is defined in types_max_str_size.h
+        // F32_DEC_FRAC_MAX_STR_SIZE is defined in logs.h
         u64 num_frac_digit_to_write_count = (frac_digit_to_write_count < F32_DEC_FRAC_MAX_STR_SIZE) ?
-                                       frac_digit_to_write_count : F32_DEC_FRAC_MAX_STR_SIZE;
+                                            frac_digit_to_write_count : F32_DEC_FRAC_MAX_STR_SIZE;
         f32 num_frac_ext = num_frac * f32_frac_size_to_mul[num_frac_digit_to_write_count];
         u32 num_frac_int = (u32)num_frac_ext;
 
@@ -634,15 +718,16 @@ void log_dec_f32_number(f32 num)
   // Absolute values equal or greater to 8 388 608 are likely better represented as a s32 or s64
   // than as a 32-bit floating-point value (thereafter referred to as "f32"), for two reasons:
   // 
-  // - Range of values: f32 values can be as large as +/- 3.4 x 10^38. I believe such large values
-  // are never needed in video games. If they are, s32 can represent values up to +/- 2.15 x 10^9
-  // and s64 can represent values up to +/- 9.22 x 10^18 instead, which I think would cover any
-  // game programmer's needs
+  // 1. Range of values: f32 values can be as large as +/- 3.4 x 10^38. I've never needed to
+  // represent values that large as a f32. If they are ever necessary to you, I believe s32 and s64
+  // are better fits because they can represent values up to +/- 2.15 x 10^9 and +/- 9.22 x 10^18
+  // respectively, which might cover your needs. Otherwise, changing scale (i.e. meter to lightyear)
+  // might be a better option because of reason #2.
   // 
-  // - Precision: starting at 8 388 608 and beyond, f32 values cannot have a fractional part.
+  // 2. Precision: starting at 8 388 608 and beyond, f32 values cannot have a fractional part.
   // Starting at 16 777 216 and beyond, adding 1 to a f32 value doesn't change it. The fractional
   // part is not very significant at this magnitude, but s32 and s64 retain a precision of 1 on the
-  // full range of values they cover
+  // full range of values they cover.
   //
   // Nonetheless, 8 388 608 needs 23 bits to be represented, which would require a u32. So the full
   // range of the u32 type (+/- [0; 4 294 967 296]) may as well be supported, adding an extra
@@ -655,10 +740,8 @@ void log_dec_f32_number(f32 num)
     
     if (num < 8388608.f)
     {
-      // The same way values as large as +/- 3.4 x 10^38 are, in my view, never needed, I believe 
-      // precision under 0.000001 is also never needed. 0.000001 is precise enough:
-      // - if 1.0 = 1 meter,  0.000001 = 1 micrometer
-      // - if 1.0 = 1 radian, 0.000001 = 1 / 6 283 185th of a circle = 0.000057 degrees
+      // The same way values I've never needed to represent very large f32 values, I believe 
+      // representing values under 0.000001 (without changing units) should never be needed
       f32 num_rounded = (f32)num_int;
       f32 num_frac    = num - num_rounded;
       if (num_frac >= 0.000001f)
@@ -672,7 +755,7 @@ void log_dec_f32_number(f32 num)
         //   s8  unbiased_exp         = (s8)((num_bits & 0x7F800000) >> 23);
         //   u8  max_frac_digit_count = 150u - unbiased_exp;
 
-        // F32_DEC_FRAC_MULT and F32_DEC_FRAC_DEFAULT_STR_SIZE are defined in types_max_str_size.h
+        // F32_DEC_FRAC_MULT and F32_DEC_FRAC_DEFAULT_STR_SIZE are defined in logs.h
         u32 num_frac_int = (u32)(num_frac * F32_DEC_FRAC_MULT);
         log_sized_dec_u32(num_frac_int, F32_DEC_FRAC_DEFAULT_STR_SIZE);
       }

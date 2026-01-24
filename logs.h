@@ -195,15 +195,74 @@ void    log_bool(u32 boolean);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Compounds logging
+// Both must be greater or equal to 1 and match the other's value: BYTE_COUNT_FRAC_DIV should be
+// 1 followed by BYTE_COUNT_FRAC_SIZE zeros
+#define BYTE_COUNT_FRAC_SIZE 2
+#define BYTE_COUNT_FRAC_DIV  100
+
+// Log the passed count of bytes shortened to be human-readable (if necessary), followed by a space
+// character (' '), its matching decimal unit prefix (if any), and the unit character ('B').
+//
+// The shortened human-redable version of the byte count has BYTE_COUNT_FRAC_SIZE fractional digits
+// if it is superior to 1000. The least significant fractional digit is not rounded.
+// For instance:
+// - 500     will be displayed as "500 B"
+// - 5000000 will be displayed as "5.00 MB"
+// - 5000001 will be displayed as "5.00 MB"
+// - 5009999 will be displayed as "5.00 MB"
+// - 5010000 will be displayed as "5.01 MB"
+// - 5999999 will be displayed as "5.99 MB"
+//
+// The decimal unit prefix will be one of:
+// - 'K' for Kilo (x 1000^1)
+// - 'M' for Mega (x 1000^2)
+// - 'G' for Giga (x 1000^3)
+// - 'T' for Tera (x 1000^4)
+// - 'P' for Peta (x 1000^5)
+// - 'E' for Exa  (x 1000^6)
+void log_byte_count_dec_unit(u64 byte_count);
+
+
+// Log the passed count of bytes shortened to be human-readable (if necessary), followed by a space
+// character (' '), its matching binary unit prefix (if any), and the unit character ('B').
+//
+// The shortened human-redable version of the byte count has BYTE_COUNT_FRAC_SIZE fractional digits
+// if it is superior to 1024 (2^10). The least significant fractional digit is not rounded.
+// For instance:
+// - 500     will be displayed as "500 B"
+// - 5242880 = 5 x 2^20                 will be displayed as "5.00 MiB"
+// - 5242881 = 5 x 2^20 + 1             will be displayed as "5.00 MiB"
+// - 5253365 = 5 x 2^20 + 10 x 2^10     will be displayed as "5.00 MiB" (integer division truncates)
+// - 5253366 = 5 x 2^20 + 10 x 2^10 + 1 will be displayed as "5.01 MiB"
+// - 6291455 = 6 x 2^20 - 1             will be displayed as "5.99 MiB"
+//
+// The binary unit prefix will be one of:
+// - "Ki" for Kibi (x 1024^1)
+// - "Mi" for Mebi (x 1024^2)
+// - "Gi" for Gibi (x 1024^3)
+// - "Ti" for Tebi (x 1024^4)
+// - "Pi" for Pebi (x 1024^5)
+// - "Ei" for Exbi (x 1024^6)
+void log_byte_count_bin_unit(u64 byte_count);
+
+
 // Retrieve the last Windows API error and log its decimal code and matching description as:
 // "Last Windows error: <decimal error code>, <error description>"
 void log_last_windows_error(void);
 
 
-
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Binary number logging
+#define U8_MAX_BIN_STR_SIZE   8
+#define U16_MAX_BIN_STR_SIZE 16
+#define U32_MAX_BIN_STR_SIZE 32
+#define U64_MAX_BIN_STR_SIZE 64
+#define S8_MAX_BIN_STR_SIZE   8
+#define S16_MAX_BIN_STR_SIZE 16
+#define S32_MAX_BIN_STR_SIZE 32
+#define S64_MAX_BIN_STR_SIZE 64
+#define F32_MAX_BIN_STR_SIZE 32
+
 void log_sized_bin_s8 (s8  num, u64 bit_to_write_count);
 void log_sized_bin_s16(s16 num, u64 bit_to_write_count);
 void log_sized_bin_s32(s32 num, u64 bit_to_write_count);
@@ -251,8 +310,28 @@ void log_bin_f32(f32 num);
           (num)
 
 
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Decimal number logging
+#define U8_MAX_DEC_STR_SIZE            3
+#define U16_MAX_DEC_STR_SIZE           5
+#define U32_MAX_DEC_STR_SIZE          10
+#define U64_MAX_DEC_STR_SIZE          20
+#define S8_MAX_DEC_STR_SIZE            4
+#define S16_MAX_DEC_STR_SIZE           6
+#define S32_MAX_DEC_STR_SIZE          11
+#define S64_MAX_DEC_STR_SIZE          20
+#define F32_DEC_FRAC_DEFAULT_STR_SIZE  6
+#define F32_DEC_FRAC_MAX_STR_SIZE      9
+
+// Should be a 1 followed by F32_DEC_FRAC_DEFAULT_STR_SIZE zeros
+#define F32_DEC_FRAC_MULT 1000000.f
+
+// Sign + integer part + period + fractional part
+#define F32_MAX_DEC_STR_SIZE (1 + U32_MAX_DEC_STR_SIZE + 1 + F32_DEC_FRAC_MAX_STR_SIZE)
+
+
 void log_sized_dec_s8 (s8  num, u64 digit_to_write_count);
 void log_sized_dec_s16(s16 num, u64 digit_to_write_count);
 void log_sized_dec_s32(s32 num, u64 digit_to_write_count);
@@ -308,8 +387,20 @@ void log_dec_f32(f32 num);
           (num)
 
 
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Hexadecimal number logging
+#define U8_MAX_HEX_STR_SIZE   2
+#define U16_MAX_HEX_STR_SIZE  4
+#define U32_MAX_HEX_STR_SIZE  8
+#define U64_MAX_HEX_STR_SIZE 16
+#define S8_MAX_HEX_STR_SIZE   2
+#define S16_MAX_HEX_STR_SIZE  4
+#define S32_MAX_HEX_STR_SIZE  8
+#define S64_MAX_HEX_STR_SIZE 16
+#define F32_MAX_HEX_STR_SIZE  8
+
 void log_sized_hex_s8 (s8  num, u64 nibble_to_write_count);
 void log_sized_hex_s16(s16 num, u64 nibble_to_write_count);
 void log_sized_hex_s32(s32 num, u64 nibble_to_write_count);
