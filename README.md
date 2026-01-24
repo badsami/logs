@@ -104,7 +104,7 @@ The code in this repository is inspired from
 - This small library provides me with clearer, more explicit control over logs and their outputs
 - I avoid using the C standard library and Windows C runtime, which often incur hidden performance hits or perform operations I don't need, and increase executable size significantly for small tools/libraries.
   - Using WIndows C runtime, compiling this library (`example.c` included) with `build.bat` results in a 106.5 KB executable. It cannot fit into the L1 instruction cache of an [Intel's Lion Cove](https://en.wikipedia.org/wiki/Lion_Cove#L0) CPU nor in that of an [AMD's Zen 5](https://en.wikipedia.org/wiki/Zen_5#L1) CPU, both from 2024
-  - Without the C runtime, the executable shrinks down to 5.5 KB, meaning it could fit in the L1 cache of an [Intel's i486](https://en.wikipedia.org/wiki/I486#Differences_between_i386_and_i486) CPU from 1989 or in that of an [AMD's K6](https://en.wikipedia.org/wiki/AMD_K6#Models) CPU from 1997. Isn't that incredible?
+  - Without the C runtime, the executable shrinks down to 5,632 bytes, meaning it could fit in the L1 cache of an [Intel's i486](https://en.wikipedia.org/wiki/I486#Differences_between_i386_and_i486) CPU from 1989 or in that of an [AMD's K6](https://en.wikipedia.org/wiki/AMD_K6#Models) CPU from 1997. Isn't that incredible?
 
 ### Why support Windows only?
 This is the operating system I'm most familiar with, and Wine makes it easy to run code targeted at Windows on Linux. But I'm interested in making this little library available on Linux too.
