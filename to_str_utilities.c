@@ -5,15 +5,15 @@
 //// Intrinsics
 // Declare the specific intrinsics used below as extern, rather than including the 1025-line-long
 // intrin.h header 
-extern u8 _BitScanReverse(u32* msb_idx, u32 mask);
-extern u8 _BitScanReverse64(u32* msb_idx, u64 mask);
+extern unsigned char _BitScanReverse(unsigned long* msb_idx, unsigned long mask);
+extern unsigned char _BitScanReverse64(unsigned long* msb_idx, unsigned __int64 mask);
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Intrisics wrapper
 u64 bsr32(u32 num)
 {
-  u32 msb_idx;
+  unsigned long msb_idx;
   _BitScanReverse(&msb_idx, num);
   return msb_idx;
 }
@@ -21,7 +21,7 @@ u64 bsr32(u32 num)
 
 u64 bsr64(u64 num)
 {
-  u32 msb_idx;
+  unsigned long msb_idx;
   _BitScanReverse64(&msb_idx, num);
   return msb_idx;
 }
