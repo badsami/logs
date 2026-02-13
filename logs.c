@@ -29,6 +29,38 @@ static void logs_close_output(logs_output_idx output_idx)
 }
 
 
+// memcpy is automatically inserted to replace bits of code by compilers, even when the standard
+// standard library and C runtime are explicitely excluded through compiler flags. A minimal version
+// of memcpy is enough for this library, and is called instead of the code that would otherwise be
+// replaced
+#pragma function(memcpy)
+void* memcpy(void* dest, const void* src, u64 byte_count)
+{
+  const u8* src_u8  = src;
+  u8*       dest_u8 = dest;
+
+  const u64       u8_x8_count   = byte_count & ~7;
+  const u8* const src_u8_x8_end = src_u8 + u8_x8_count;
+  const u8* const src_u8_end    = src_u8 + byte_count;
+
+  while (src_u8 < src_u8_x8_end)
+  {
+    *(u64*)dest_u8 = *(u64*)src_u8;
+
+    dest_u8 += 8;
+    src_u8  += 8;
+  }
+
+  while (src_u8 < src_u8_end)
+  {
+    *dest_u8 = *src_u8;
+    dest_u8 += 1;
+    src_u8  += 1;
+  }
+
+  return dest_u8;
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -212,15 +244,7 @@ void log_utf16_character(WCHAR character)
 void log_sized_utf8_str(const char* str, u64 char_count)
 {
   char* dest = (char*)(logs.buffer + logs.buffer_end_idx);
-  
-  const char* str_end = str + char_count;
-  while (str < str_end)
-  {
-    *dest = *str;
-    dest += 1;
-    str  += 1;
-  }
-  
+  memcpy(dest, str, char_count);
   logs.buffer_end_idx += char_count;
 }
 
@@ -241,7 +265,6 @@ void log_sized_utf16_str(const WCHAR* str, s32 wchar_count)
                                           AVAILABLE_BYTES, // cbMultiByte
                                           0,               // lpDefaultChar
                                           0);              // lpUsedDefaultChar
-
   logs.buffer_end_idx += bytes_written;
 }
 
