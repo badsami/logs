@@ -26,17 +26,17 @@ set COMP_FLAGS=/nologo               ^
                /utf-8
 set LINK_FLAGS=/link                   ^
                /emittoolversioninfo:no ^
-               /NOCOFFGRPINFO          ^
+               /nocoffgrpinfo          ^
                /subsystem:console      ^
                /entry:mainCRTStartup   ^
+               /merge:.rdata=.text     ^
+               /merge:.pdata=.text     ^
                /nodefaultlib           ^
                /opt:ref                ^
                /incremental:no         ^
                /fixed                  ^
                /out:%BUILD_DIR%\%EXE_OUTPUT%
-set SOURCES=to_str_utilities.c ^
-            logs.c             ^
-            example.c
+set SOURCES=logs.c example.c
 set LIBRARIES=kernel32.lib
 
 pushd %~dp0

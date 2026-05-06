@@ -1,88 +1,113 @@
 #if defined(LOGS_ENABLED) && (LOGS_ENABLED != 0)
 #include "logs.h"
-#include "to_str_utilities.h"
 
-#define _WIN32_WINNT 0x0501 // ATTACH_PARENT_PROCESS
-#include <Windows.h>
+#if defined(LOGS_OS_WINDOWS)
+#  define _WIN32_WINNT 0x0501 // ATTACH_PARENT_PROCESS
+#  include <Windows.h>
+#elif defined(LOGS_OS_LINUX)
+// #  include "linux_logs_syscalls.h"
+#  define STDOUT_FD 2
+#endif
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-//// Private helpers
-static void logs_close_output(logs_output_idx output_idx)
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//// Helpers
+static inline u32 open_file_output_ascii(const char* file_path)
 {
-  u32 output_mask          = (1 << output_idx);
-  u32 output_was_enabled   = logs.outputs_state_bits & output_mask;
-  logs.outputs_state_bits &= ~output_mask;
+#if defined(LOGS_OS_WINDOWS)
+  const u32 SHARE_RDWR = FILE_SHARE_READ | FILE_SHARE_WRITE;
+  HANDLE output = CreateFileA(file_path,        // lpFileName
+                              FILE_APPEND_DATA, // dwDesiredAccess
+                              SHARE_RDWR,       // dwShareMode
+                              0,                // lpSecurityAttributes
+                              OPEN_ALWAYS,      // dwCreationDisposition
+                              0,                // dwFlagsAndAttributes
+                              0);               // hTemplateFile
+  return (u32)(u64)output;
+#elif defined(LOGS_OS_LINUX)
+  // TODO: O_ASYNC?
+  #define O_RDWR	          00000002
+  #define O_CREAT           00000100
+  #define O_APPEND          00002000
+  #define O_DIRECT          00040000
+  #define CREAT_PERMISSIONS 00000755
   
-  if (logs.buffer_end_idx != 0 && output_was_enabled)
-  {
-    // Flush buffered content to the output before closing it
-    WriteFile(logs.outputs[output_idx], logs.buffer, (u32)logs.buffer_end_idx, 0, 0);
-    
-    // If there are no other enabled outputs, the content of the log buffer is no longer needed
-    u32 any_output_open = (logs.outputs_state_bits != 0);
-    logs.buffer_end_idx = any_output_open * logs.buffer_end_idx;
-  }
-  
-  CloseHandle(logs.outputs[output_idx]);
+  const u64 flags = O_RDWR | O_CREAT | O_APPEND | O_DIRECT; 
+  const u64 open_syscall = 2;
+  s64 output;
+  __asm__ __volatile__ ("syscall" :
+                        "=a"(output) :
+                        "a"(open_syscall), "D"(file_path), "S"(flags), "d"(CREAT_PERMISSIONS) :
+                        "rcx", "r11", "memory");
+  return (u32)(s32)output;
+#endif
+}
+
+static inline void write_to_output(u32 output, const u8* data, u64 data_size)
+{
+#if defined(LOGS_OS_WINDOWS)
+  HANDLE handle = (HANDLE)(u64)output;
+  WriteFile(handle, data, (u32)data_size, 0, 0);
+#elif defined(LOGS_OS_LINUX)
+  const u64 write_syscall = 1;
+  __asm__ __volatile__ ("syscall" : :
+                        "a"(write_syscall), "D"(output), "S"(data), "d"(data_size) :
+                        "rcx", "r11", "memory");
+#endif
+}
+
+
+static inline void logs_close_output(logs_output_idx output_idx)
+{
+  u32 output = logs.outputs[output_idx];
+
+#if defined(LOGS_OS_WINDOWS)
+  CloseHandle((HANDLE)(u64)output);
+#elif defined(LOGS_OS_LINUX)
+  const u64 close_syscall = 3;
+  __asm__ __volatile__ ("syscall" : :
+                        "a"(close_syscall), "D"(output) :
+                        "rcx", "r11", "memory");
+#endif
+
   logs.outputs[output_idx] = 0;
 }
 
 
-// memcpy is automatically inserted to replace bits of code by compilers, even when the standard
-// standard library and C runtime are explicitely excluded through compiler flags. A minimal version
-// of memcpy is enough for this library, and is called instead of the code that would otherwise be
-// replaced
-#pragma function(memcpy)
-void* memcpy(void* dest, const void* src, u64 byte_count)
-{
-  const u8* src_u8  = src;
-  u8*       dest_u8 = dest;
-
-  const u64       u8_x8_count   = byte_count & ~7;
-  const u8* const src_u8_x8_end = src_u8 + u8_x8_count;
-  const u8* const src_u8_end    = src_u8 + byte_count;
-
-  while (src_u8 < src_u8_x8_end)
-  {
-    *(u64*)dest_u8 = *(u64*)src_u8;
-
-    dest_u8 += 8;
-    src_u8  += 8;
-  }
-
-  while (src_u8 < src_u8_end)
-  {
-    *dest_u8 = *src_u8;
-    dest_u8 += 1;
-    src_u8  += 1;
-  }
-
-  return dest_u8;
-}
 
 
-
+///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Global
 struct logs logs =
 {
-  .buffer             = {0},
-  .outputs            = {0, 0},
-  .buffer_end_idx     = 0,
-  .outputs_state_bits = 0
+  .buffer = {0},
+  .outputs =
+  {
+#if defined(LOGS_OS_LINUX)
+    // stdout is opened by default
+    [LOGS_OUTPUT_CONSOLE] = STDOUT_FD,
+#else
+    [LOGS_OUTPUT_CONSOLE] = 0,
+#endif
+    [LOGS_OUTPUT_FILE]    = 0
+  },
+  .buffer_end_idx = 0
 };
 
 
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
 //// Output management
 // Console output
 void logs_open_console_output(void)
 {
-  if (logs.outputs[LOGS_CONSOLE_OUTPUT] == 0)
+  if (logs.outputs[LOGS_OUTPUT_CONSOLE] == 0)
   {
+#if defined(LOGS_OS_WINDOWS)
     const BOOL success    = AttachConsole(ATTACH_PARENT_PROCESS);
     const u32  last_error = GetLastError();
     if ((success == 0) && (last_error != ERROR_ACCESS_DENIED))
@@ -91,7 +116,7 @@ void logs_open_console_output(void)
       AllocConsole();
       SetConsoleTitleA("Logs");
 
-      logs.console_original_output_code_page = 0u;
+      logs.console_original_output_code_page = 0;
     }
     else
     {
@@ -102,14 +127,21 @@ void logs_open_console_output(void)
     SetConsoleOutputCP(CP_UTF8);
 
     const u32 SHARE_MODE = FILE_SHARE_READ | FILE_SHARE_WRITE;
-    logs.outputs[LOGS_CONSOLE_OUTPUT] = CreateFileA("\\\\?\\CONOUT$", // lpFileName
-                                                    GENERIC_WRITE,    // dwDesiredAccess
-                                                    SHARE_MODE,       // dwShareMode
-                                                    0,                // lpSecurityAttributes
-                                                    OPEN_EXISTING,    // dwCreationDisposition
-                                                    0,                // dwFlagsAndAttributes
-                                                    0);               // hTemplateFile
-    logs_enable_output(LOGS_CONSOLE_OUTPUT);
+    HANDLE output = CreateFileA("\\\\?\\CONOUT$", // lpFileName
+                                GENERIC_WRITE,    // dwDesiredAccess
+                                SHARE_MODE,       // dwShareMode
+                                0,                // lpSecurityAttributes
+                                OPEN_EXISTING,    // dwCreationDisposition
+                                0,                // dwFlagsAndAttributes
+                                0);               // hTemplateFile
+    logs.outputs[LOGS_OUTPUT_CONSOLE] = (u32)(u64)output;
+
+#elif defined(LOGS_OS_LINUX)
+    // Since stdout is not opened nor handled by this process, its file descriptor is set and unset
+    // to indicate whether it should be used or not, but it is otherwise left opened and never
+    // closed nor re-opened
+    logs.outputs[LOGS_OUTPUT_CONSOLE] = STDOUT_FD;
+#endif
   }
 }
 
@@ -117,17 +149,21 @@ void logs_open_console_output(void)
 // NOTE (Sami): this breaks Windows Terminal (the default Windows 11 console)
 void logs_close_console_output(void)
 {
-  if (logs.outputs[LOGS_CONSOLE_OUTPUT] != 0)
+  if (logs.outputs[LOGS_OUTPUT_CONSOLE] != 0)
   {
-    logs_close_output(LOGS_CONSOLE_OUTPUT);
-
-    if (logs.console_original_output_code_page != 0u)
+#if defined(LOGS_OS_WINDOWS)
+    logs_close_output(LOGS_OUTPUT_CONSOLE);
+    if (logs.console_original_output_code_page != 0)
     {
       SetConsoleOutputCP(logs.console_original_output_code_page);
     }
     
     // Free the console of this process
     FreeConsole();
+#elif defined(LOGS_OS_LINUX)
+    // stdout file descriptor is removed to indicate it should not be used, but it is never closed
+    logs.outputs[LOGS_OUTPUT_CONSOLE] = 0;
+#endif
   }
 }
 
@@ -135,76 +171,68 @@ void logs_close_console_output(void)
 // File output
 void logs_open_file_output_ascii(const char* file_path)
 {
-  if (logs.outputs[LOGS_FILE_OUTPUT] == 0)
+  if (logs.outputs[LOGS_OUTPUT_FILE] == 0)
   {
-    const u32 SHARE_MODE = FILE_SHARE_READ | FILE_SHARE_WRITE;
-    logs.outputs[LOGS_FILE_OUTPUT] = CreateFileA(file_path,        // lpFileName
-                                                 FILE_APPEND_DATA, // dwDesiredAccess
-                                                 SHARE_MODE,       // dwShareMode
-                                                 0,                // lpSecurityAttributes
-                                                 OPEN_ALWAYS,      // dwCreationDisposition
-                                                 0,                // dwFlagsAndAttributes
-                                                 0);               // hTemplateFile
-    logs_enable_output(LOGS_FILE_OUTPUT);
+    u32 output = open_file_output_ascii(file_path);
+    logs.outputs[LOGS_OUTPUT_FILE] = output;
   }
 }
 
 
-void logs_open_file_output_utf16(const WCHAR* file_path)
+void logs_open_file_output_utf16(const char16* file_path)
 {
-  if (logs.outputs[LOGS_FILE_OUTPUT] == 0)
+  if (logs.outputs[LOGS_OUTPUT_FILE] == 0)
   {
+#if defined(LOGS_OS_WINDOWS)
     const u32 SHARE_MODE = FILE_SHARE_READ | FILE_SHARE_WRITE;
-    logs.outputs[LOGS_FILE_OUTPUT] = CreateFileW(file_path,        // lpFileName
-                                                 FILE_APPEND_DATA, // dwDesiredAccess
-                                                 SHARE_MODE,       // dwShareMode
-                                                 0,                // lpSecurityAttributes
-                                                 OPEN_ALWAYS,      // dwCreationDisposition
-                                                 0,                // dwFlagsAndAttributes
-                                                 0);               // hTemplateFile
-    logs_enable_output(LOGS_FILE_OUTPUT);
+    HANDLE output = CreateFileW(file_path,        // lpFileName
+                                FILE_APPEND_DATA, // dwDesiredAccess
+                                SHARE_MODE,       // dwShareMode
+                                0,                // lpSecurityAttributes
+                                OPEN_ALWAYS,      // dwCreationDisposition
+                                0,                // dwFlagsAndAttributes
+                                0);               // hTemplateFile
+    logs.outputs[LOGS_OUTPUT_FILE] = (u32)(u64)output;
+#elif defined(LOGS_OS_LINUX)
+    u32 output = open_file_output_ascii((char*)file_path);
+    logs.outputs[LOGS_OUTPUT_FILE] = output;
+#endif
   }
 }
 
 
 void logs_close_file_output(void)
 {
-  if (logs.outputs[LOGS_FILE_OUTPUT] != 0)
+  if (logs.outputs[LOGS_OUTPUT_FILE] != 0)
   {
-    logs_close_output(LOGS_FILE_OUTPUT);
+    logs_close_output(LOGS_OUTPUT_FILE);
   }
 }
 
 
 // All outputs
-void logs_disable_output(logs_output_idx output_idx)
-{
-  logs.outputs_state_bits &= ~(1 << output_idx);
-}
-
-
-void logs_enable_output(logs_output_idx output_idx)
-{
-  u32 is_open = (logs.outputs[output_idx] != 0);
-  logs.outputs_state_bits |= (is_open << output_idx);
-}
-
-
 void logs_flush(void)
 {
   // Trust that the caller knows the log buffer is not empty
-  // If an output is enabled, it is open. Parse the output state bits to select destination outputs
-  u32 outputs_mask = logs.outputs_state_bits;
-  u32 idx          = 0;
-  while (outputs_mask != 0)
+  for (u64 i = 0; i < LOGS_OUTPUT_COUNT; i++)
   {
-    if (outputs_mask & 0b1)
+    u32 output = logs.outputs[i];
+    if (output != 0)
     {
-      WriteFile(logs.outputs[idx], logs.buffer, (u32)logs.buffer_end_idx, 0, 0);
+      write_to_output(output, logs.buffer, logs.buffer_end_idx);
     }
-    
-    idx++;
-    outputs_mask >>= 1;
+  }
+
+  logs.buffer_end_idx = 0;
+}
+
+
+void logs_flush_to(logs_output_idx output_idx)
+{
+  u32 output = logs.outputs[output_idx];
+  if (output != 0)
+  {
+    write_to_output(output, logs.buffer, logs.buffer_end_idx);
   }
 
   logs.buffer_end_idx = 0;
@@ -231,41 +259,58 @@ u64 logs_buffer_remaining_bytes(void)
 void log_utf8_character(char character)
 {
   logs.buffer[logs.buffer_end_idx] = character;
-  logs.buffer_end_idx += 1u;
+  logs.buffer_end_idx += 1;
 }
 
 
-void log_utf16_character(WCHAR character)
+void log_utf16_character(char16 character)
 {
-  log_sized_utf16_str(&character, 1u);
+  log_sized_utf16_str(&character, 1);
 }
 
 
 void log_sized_utf8_str(const char* str, u64 char_count)
 {
-  char* dest = (char*)(logs.buffer + logs.buffer_end_idx);
-  memcpy(dest, str, char_count);
+  char* dest_u8 = (char*)(logs.buffer + logs.buffer_end_idx);
+
+  const u64         u8_x8_count = char_count & ~7;
+  const char* const str_x8_end  = str + u8_x8_count;
+  const char* const str_end     = str + char_count;
+
+  while (str < str_x8_end)
+  {
+    *(u64*)dest_u8 = *(u64*)str;
+
+    dest_u8 += 8;
+    str  += 8;
+  }
+
+  while (str < str_end)
+  {
+    *dest_u8 = *str;
+    dest_u8 += 1;
+    str  += 1;
+  }
+
   logs.buffer_end_idx += char_count;
 }
 
 
-void log_sized_utf16_str(const WCHAR* str, s32 wchar_count)
+void log_sized_utf16_str(const char16* str, u64 char16_count)
 {
-  // None of the functions appending content to the logs buffer make sure there is enough space to
-  // write to. Lie about the available space in the logs buffer to remain consistent
-  const s32 AVAILABLE_BYTES = ~(1 << 31);
+  u8* dest = logs.buffer + logs.buffer_end_idx;
+  while (char16_count != 0)
+  {
+    u32 unicode;
+    u64 char16_read        = utf16_code_point_to_unicode(str, &unicode);
+    u64 written_byte_count = unicode_to_utf8_code_point(unicode, dest);
+    
+    char16_count -= char16_read;
+    str          += char16_read;
+    dest         += written_byte_count;
+  }
 
-  // TODO: implement our own WideCharToMultiByte()
-  char* dest = (char*)(logs.buffer + logs.buffer_end_idx);
-  s32 bytes_written = WideCharToMultiByte(CP_UTF8,         // CodePage,
-                                          0,               // dwFlags,
-                                          str,             // lpWideCharStr
-                                          wchar_count,     // cchWideChar 
-                                          dest,            // lpMultiByteStr
-                                          AVAILABLE_BYTES, // cbMultiByte
-                                          0,               // lpDefaultChar
-                                          0);              // lpUsedDefaultChar
-  logs.buffer_end_idx += bytes_written;
+  logs.buffer_end_idx = dest - logs.buffer;
 }
 
 
@@ -275,17 +320,28 @@ void log_null_terminated_utf8_str(const char* str)
   while (character != '\0')
   {
     logs.buffer[logs.buffer_end_idx] = character;
-    logs.buffer_end_idx += 1ull;
+    logs.buffer_end_idx += 1;
     
-    str  += 1;
+    str       += 1;
     character = *str;
   }
 }
 
 
-void log_null_terminated_utf16_str(const WCHAR* str)
+void log_null_terminated_utf16_str(const char16* str)
 {
-  log_sized_utf16_str(str, -1);
+  u8* dest = logs.buffer + logs.buffer_end_idx;
+  while (*str != u'\0')
+  {
+    u32 unicode;
+    u64 char16_read      = utf16_code_point_to_unicode(str, &unicode);
+    u64 written_u8_count = unicode_to_utf8_code_point(unicode, dest);
+    
+    str  += char16_read;
+    dest += written_u8_count;
+  }
+
+  logs.buffer_end_idx = dest - logs.buffer;
 }
 
 
@@ -295,7 +351,7 @@ void log_null_terminated_utf16_str(const WCHAR* str)
 //// Non-alphanumeric types logging
 static const char* bool_str = "truefalse";
 
-void log_bool(u32 boolean)
+void log_bool(u64 boolean)
 {
   const u64 is_false = (boolean == 0);
   const u64 offset   = is_false << 2; // 4 if (boolean == 0), 0 otherwise
@@ -315,17 +371,16 @@ void log_bool(u32 boolean)
 //// Compounds logging
 static const u64 unit_multipliers[] =
 {
-  // Maybe it's a road. Perhaps a flame? Or a witch hat! A reverse lightning bolt even!
-  1,
-  1000, // K
-  1000000, // M
-  1000000000, // G
-  1000000000000ull, // T
-  1000000000000000ull, // P
-  1000000000000000000ull // E
+  1ull, // no unit multiplier
+  1000ull, // Kilo (K)
+  1000000ull, // Mega (M)
+  1000000000ull, // Giga (G)
+  1000000000000ull, // Tera (T)
+  1000000000000000ull, // Peta (P)
+  1000000000000000000ull // Exa (E)
 };
 
-static const char dec_unit_prefixes[7] = {0, 'K', 'M', 'G', 'T', 'P', 'E'};
+static const char unit_prefixes[7] = {0, 'K', 'M', 'G', 'T', 'P', 'E'};
 
 void log_byte_count_dec_unit(u64 byte_count)
 {
@@ -355,7 +410,7 @@ void log_byte_count_dec_unit(u64 byte_count)
   const u64 suffix_char_count = 2 + byte_count_ge_1000;
 
   dest[0]          = ' ';
-  dest[1]          = dec_unit_prefixes[unit_idx]; // overwritten if unnecessary
+  dest[1]          = unit_prefixes[unit_idx]; // overwritten if unnecessary
   dest[b_char_idx] = 'B';
 
   logs.buffer_end_idx += suffix_char_count;
@@ -365,7 +420,7 @@ void log_byte_count_dec_unit(u64 byte_count)
 void log_byte_count_bin_unit(u64 byte_count)
 {
   // Log the integer part
-  const u64 msb_idx        = bsr64(byte_count | 0b1);
+  const u64 msb_idx        = get_msb_1_bit_idx_u64(byte_count);
   const u64 prefix_idx     = msb_idx / 10;
   const u8  mul_shift      = (u8)(prefix_idx * 10);
   const u32 int_byte_count = (u32)(byte_count >> mul_shift);
@@ -391,7 +446,7 @@ void log_byte_count_bin_unit(u64 byte_count)
   const u64 b_char_idx        = 1 + b_char_offset;
 
   dest[0]          = ' ';
-  dest[1]          = dec_unit_prefixes[prefix_idx]; // overwritten if unnecessary
+  dest[1]          = unit_prefixes[prefix_idx]; // overwritten if unnecessary
   dest[i_char_idx] = 'i'; // overwritten if unnecessary
   dest[b_char_idx] = 'B';
 
@@ -399,8 +454,9 @@ void log_byte_count_bin_unit(u64 byte_count)
 }
 
 
-void log_last_windows_error(void)
+void log_os_api_error(u32 error_code)
 {
+#if defined(LOGS_OS_WINDOWS)
   const DWORD flags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
 
   // Can be obtained either from winnt.h, or through "Windows Language Code Identifier (LCID)
@@ -412,16 +468,15 @@ void log_last_windows_error(void)
   // write to. Lie about the available space in the logs buffer to remain consistent
   const DWORD max_bytes = 64000; // maximum allowed by FormatMessage()
 
-  u32 last_error = GetLastError();
-  log_literal_str("Last Windows error: ");
-  log_dec_u32(last_error);
-  log_literal_str(", ");
+  log_literal_str("Windows API error ");
+  log_dec_u32(error_code);
+  log_literal_str(": ");
 
   char* dest = (char*)(logs.buffer + logs.buffer_end_idx);
 
   DWORD char_written = FormatMessageA(flags,         // dwFlags
                                       0,             // lpSource
-                                      last_error,    // dwMessageId
+                                      error_code,    // dwMessageId
                                       en_us_lang_id, // dwLanguageId
                                       dest,          // lpBuffer
                                       max_bytes,     // nSize
@@ -436,13 +491,23 @@ void log_last_windows_error(void)
     // Messages finish with a carriage return + linefeed. Both are removed
     logs.buffer_end_idx += char_written - 2;
   }
+#elif defined(LOGS_OS_LINUX)
+#  include "linux_errno_to_str.inl"
+  const char* error_str = linux_errno_to_str[error_code];
+  log_literal_str("Linux API error ");
+  log_dec_u32(error_code);
+  log_literal_str(": ");
+  log_null_terminated_ascii_str(error_str);
+#endif
 }
 
 
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-//// Binary number logging
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//// Numbers logging
+// Binary
 void log_sized_bin_s8 (s8  num, u64 bit_to_write_count) { log_sized_bin_u64((u64)num, bit_to_write_count); }
 void log_sized_bin_s16(s16 num, u64 bit_to_write_count) { log_sized_bin_u64((u64)num, bit_to_write_count); }
 void log_sized_bin_s32(s32 num, u64 bit_to_write_count) { log_sized_bin_u64((u64)num, bit_to_write_count); }
@@ -458,7 +523,7 @@ void log_sized_bin_u64(u64 num, u64 bit_to_write_count)
   u8*       dest          = num_str_start + bit_to_write_count;
   while (dest > num_str_start)
   {
-    u8 bit = num & 0b1;
+    u8 bit = num & 1;
     
     dest -= 1;
     *dest = '0' + bit;
@@ -484,10 +549,7 @@ void log_bin_u64(u64 num) { log_sized_bin_u64(num,           u64_bit_count(num))
 void log_bin_f32(f32 num) { log_sized_bin_u64(*(u32*)(&num), u32_bit_count(*(u32*)&num)); }
 
 
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-//// Decimal number logging
+// Decimal number logging
 void log_sized_dec_s8 (s8  num, u64 digit_to_write_count) { log_sized_dec_u64((u64)num, digit_to_write_count); }
 void log_sized_dec_s16(s16 num, u64 digit_to_write_count) { log_sized_dec_u64((u64)num, digit_to_write_count); }
 void log_sized_dec_s32(s32 num, u64 digit_to_write_count) { log_sized_dec_u64((u64)num, digit_to_write_count); }
@@ -495,7 +557,7 @@ void log_sized_dec_s32(s32 num, u64 digit_to_write_count) { log_sized_dec_u64((u
 
 void log_sized_dec_s64(s64 num, u64 digit_to_write_count)
 {
-  u64 is_neg  = num < 0ull;
+  u64 is_neg  = num < 0;
   u64 pos_num = is_neg ? -num : num;
 
   logs.buffer[logs.buffer_end_idx] = '-'; // overwritten if unnecessary
@@ -516,8 +578,8 @@ void log_sized_dec_u64(u64 num, u64 digit_to_write_count)
   u8*       dest          = num_str_start + digit_to_write_count;
   while (dest > num_str_start)
   {
-    u64 quotient = num / 10ull;
-    u8  digit    = (u8)(num - (quotient * 10ull));
+    u64 quotient = num / 10;
+    u8  digit    = (u8)(num - (quotient * 10));
 
     dest -= 1;
     *dest = '0' + digit;
@@ -608,14 +670,14 @@ void log_sized_dec_f32_number(f32 num, u64 frac_digit_to_write_count)
     dest[1] = 'i';
     dest[2] = 'g';
 
-    logs.buffer_end_idx += 3u;
+    logs.buffer_end_idx += 3;
   }
 }
 
 
 void log_sized_dec_f32(f32 num, u64 frac_size)
 {
-  u32 is_a_number = f32_is_a_number(num);
+  u64 is_a_number = f32_is_a_number(num);
   if (is_a_number)
   {
     log_sized_dec_f32_number(num, frac_size);
@@ -645,7 +707,7 @@ void log_dec_s32(s32 num)
   num_str_start += is_neg;
   while (dest > num_str_start)
   {
-    u32 quotient = pos_num / 10u;
+    u32 quotient = pos_num / 10;
     u8  digit    = (u8)(pos_num - (quotient * 10u));
 
     dest -= 1;
@@ -671,8 +733,8 @@ void log_dec_s64(s64 num)
   *num_str_start = '-'; // will be overwritten if not needed
   while (dest > num_str_start)
   {
-    u64 quotient = pos_num / 10ull;
-    u8  digit    = (u8)(pos_num - (quotient * 10ull));
+    u64 quotient = pos_num / 10;
+    u8  digit    = (u8)(pos_num - (quotient * 10));
 
     dest -= 1;
     *dest = '0' + digit;
@@ -791,14 +853,14 @@ void log_dec_f32_number(f32 num)
     dest[1] = 'i';
     dest[2] = 'g';
 
-    logs.buffer_end_idx += 3u;
+    logs.buffer_end_idx += 3;
   }
 }
 
 
 void log_dec_f32(f32 num)
 {
-  u32 is_a_number = f32_is_a_number(num);
+  u64 is_a_number = f32_is_a_number(num);
   if (is_a_number)
   {
     log_dec_f32_number(num);
@@ -810,10 +872,7 @@ void log_dec_f32(f32 num)
 }
 
 
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-//// Hexadecimal number logging
+// Hexadecimal
 static const char hex_digits[] = "0123456789ABCDEF";
 
 void log_sized_hex_s8 (s8  num, u64 nibble_to_write_count) { log_sized_hex_u64((u64)num, nibble_to_write_count); }
@@ -856,7 +915,258 @@ void log_hex_u32(u32 num) { log_sized_hex_u64(num,         u32_nibble_count(num)
 void log_hex_u64(u64 num) { log_sized_hex_u64(num,         u64_nibble_count(num));         }
 void log_hex_f32(f32 num) { log_sized_hex_u64(*(u32*)&num, u32_nibble_count(*(u32*)&num)); }
 
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//// Utilities
+u64 lzcnt32(u32 num)
+{
+#if defined(_MSC_VER)
+  return __lzcnt(num);
+#elif defined(__clang__) || defined(__GNUC__)
+  return __builtin_ia32_lzcnt_u32(num);
+#endif
+}
+
+
+u64 lzcnt64(u64 num)
+{
+#if defined(_MSC_VER)
+  return __lzcnt64(num);
+#elif defined(__clang__) || defined(__GNUC__)
+  return __builtin_ia32_lzcnt_u64(num);
+#endif
+}
+
+
+u32 pdep32(u32 a, u32 mask)
+{
+#if defined(_MSC_VER)
+  return _pdep_u32(a, mask);
+#elif defined(__clang__) || defined(__GNUC__)
+  return __builtin_ia32_pdep_si(a, mask);
+#endif
+}
+
+
+u32 bswap32(u32 a)
+{
+#if defined(_MSC_VER)
+  // Should generate a bswap instruction
+  return (a              << 24) |
+         (a              >> 24) |
+         ((a & 0xFF00)   << 8) |
+         ((a & 0xFF0000) >> 8);
+#elif defined(__clang__) || defined(__GNUC__)
+  return __builtin_bswap32(a);
+#endif
+}
+
+
+u64 get_msb_1_bit_idx_u32(u32 num)
+{
+  return 31 ^ lzcnt32(num | 1);
+}
+
+
+u64 get_msb_1_bit_idx_u64(u64 num)
+{
+  return 63 ^ lzcnt64(num | 1);
+}
+
+
+// Numerals count in a number
+u64 u32_digit_count(u32 num)
+{
+  // Similar to https://commaok.xyz/post/lookup_tables/, but:
+  // - lzcnt replaces bsr
+  // - table is reversed
+  // - an extra entry is added for num = 0, so this function returns 1
+  // - the bitwise OR and substraction performed by int_log2() no longer happen
+  static const u64 offsets[33] =
+  {
+    42949672960ull, 42949672960ull,                                 // (10 << 32)
+    41949672960ull, 41949672960ull, 41949672960ull,                 // (10 << 32) - 1000000000
+    38554705664ull, 38554705664ull, 38554705664ull,                 // (9  << 32) - 100000000
+    34349738368ull, 34349738368ull, 34349738368ull, 34349738368ull, // (8  << 32) - 10000000
+    30063771072ull, 30063771072ull, 30063771072ull,                 // (7  << 32) - 1000000
+    25769703776ull, 25769703776ull, 25769703776ull,                 // (6  << 32) - 100000
+    21474826480ull, 21474826480ull, 21474826480ull, 21474826480ull, // (5  << 32) - 10000
+    17179868184ull, 17179868184ull, 17179868184ull,                 // (4  << 32) - 1000
+    12884901788ull, 12884901788ull, 12884901788ull,                 // (3  << 32) - 100
+    8589934582ull,  8589934582ull,  8589934582ull,                  // (2  << 32) - 10
+    4294967296ull,                                                  // (1  << 32)
+    4294967296ull                                                   // (1  << 32)
+  };
+
+  u64 lzcnt       = lzcnt32(num);
+  u64 offset      = offsets[lzcnt];
+  u64 digit_count = (num + offset) >> 32;
+
+  return digit_count;
+}
+
+
+u64 u64_digit_count(u64 num)
+{
+  // https://lemire.me/blog/2025/01/07/counting-the-digits-of-64-bit-integers/
+  static u64 thresholds[19] =
+  {
+    9ull,
+    99ull,
+    999ull,
+    9999ull,
+    99999ull,
+    999999ull,
+    9999999ull,
+    99999999ull,
+    999999999ull,
+    9999999999ull,
+    99999999999ull,
+    999999999999ull,
+    9999999999999ull,
+    99999999999999ull,
+    999999999999999ull,
+    9999999999999999ull,
+    99999999999999999ull,
+    999999999999999999ull,
+    9999999999999999999ull
+  };
+  u64 msb_idx       = get_msb_1_bit_idx_u64(num);
+  u64 threshold_idx = (19 * msb_idx) >> 6;
+  u64 threshold     = thresholds[threshold_idx];
+  u64 is_greater    = num > threshold;
+  u64 digit_count   = threshold_idx + is_greater + 1;
+
+  return digit_count;
+}
+
+
+u64 u32_bit_count(u32 num)
+{
+  return get_msb_1_bit_idx_u32(num) + 1;
+}
+
+
+u64 u64_bit_count(u64 num)
+{
+  return get_msb_1_bit_idx_u64(num) + 1;
+}
+
+
+u64 u32_nibble_count(u32 num)
+{
+  u64 msb_idx      = get_msb_1_bit_idx_u32(num);
+  u64 nibble_count = 1 + (msb_idx >> 2);
+
+  return nibble_count;
+}
+
+
+u64 u64_nibble_count(u64 num)
+{
+  u64 msb_idx      = get_msb_1_bit_idx_u64(num);
+  u64 nibble_count = 1 + (msb_idx >> 2);
+  
+  return nibble_count;
+}
+
+
+u64 f32_is_a_number(f32 num)
+{
+  const u32 EXPONENT_ALL_ONE = 0x7F800000;
+  
+  u32 num_bits = *(u32*)&num;
+  
+  return (num_bits & EXPONENT_ALL_ONE) != EXPONENT_ALL_ONE;
+}
+
+
+u64 utf16_code_point_to_unicode(const u16* utf16, u32* unicode)
+{
+  const u16 range = 0xDFFF - 0xD800;
+  u16 offset = utf16[0] - 0xD800;
+  if (offset > range)
+  {
+    *unicode = utf16[0];
+    return 1;
+  }
+  else
+  {
+    u32 lo = utf16[0] & 0x3FF;
+    u32 hi = (utf16[1] & 0x3FF) << 10;
+    
+    *unicode = (hi | lo) + 0x10000;
+    return 2;
+  }
+}
+
+
+static const u8 lzcnt_to_utf8_byte_count[33] =
+{
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  4, 4, 4, 4, 4,
+  3, 3, 3, 3, 3,
+  2, 2, 2, 2,
+  1, 1, 1, 1, 1, 1, 1,
+  0
+};
+
+static const u32 high_order_bits[] =
+{
+  0x0,
+  0x0,
+  0x80C0, // 0b1000000011000000
+  0x8080E0, // 0b100000001000000011100000
+  0x808080F0, // 0b10000000100000001000000011110000
+};
+
+static const u32 pdep_mask[] =
+{
+  0x0,
+  0xFF000000, // 0b11111111000000000000000000000000
+  0x1F3F0000, // 0b00011111001111110000000000000000
+  0x0F3F3F00, // 0b00001111001111110011111100000000
+  0x073F3F3F  // 0b00000111001111110011111100111111
+};
+
+u64 unicode_to_utf8_code_point(u32 unicode, u8* utf8)
+{
+  // lzcnt | byte_count | Unicode
+  // ------|------------|---------------------------
+  // 31-25 | 1          | 0wwwwwww
+  // 24-21 | 2          | 00000xxx xxwwwwww
+  // 20-16 | 3          | yyyyxxxx xxwwwwww
+  // 15-11 | 4          | 000zzzyy yyyyxxxx xxwwwwww
+  // 10- 0 | 0          | Invalid unicode
+  u64 lzcnt      = lzcnt32(unicode);
+  u64 byte_count = lzcnt_to_utf8_byte_count[lzcnt];
+
+  // byte_count |              deposited              |         bswap32(deposited)
+  // -----------|-------------------------------------|------------------------------------
+  // 1          | wwwwwwww 00000000 00000000 00000000 | 00000000 00000000 00000000 wwwwwwww
+  // 2          | 000xxxxx 00wwwwww 00000000 00000000 | 00000000 00000000 00wwwwww 000xxxxx
+  // 3          | 0000yyyy 00xxxxxx 00wwwwww 00000000 | 00000000 00wwwwww 00xxxxxx 0000yyyy
+  // 4          | 00000zzz 00yyyyyy 00xxxxxx 00wwwwww | 00wwwwww 00xxxxxx 00yyyyyy 00000zzz
+  u32 deposited = pdep32(unicode, pdep_mask[byte_count]);
+  u32 bswapped  = bswap32(deposited);
+
+  // byte_count |         bswap32(deposited)          |               encoded
+  // -----------|-------------------------------------|------------------------------------
+  // 1          | 00000000 00000000 00000000 wwwwwwww | 00000000 00000000 00000000 wwwwwwww
+  // 2          | 00000000 00000000 00wwwwww 000xxxxx | 00000000 00000000 10wwwwww 110xxxxx
+  // 3          | 00000000 00wwwwww 00xxxxxx 0000yyyy | 00000000 10wwwwww 10xxxxxx 1110yyyy
+  // 4          | 00wwwwww 00xxxxxx 00yyyyyy 00000zzz | 10wwwwww 10xxxxxx 10yyyyyy 11110zzz
+  u32 high_bits = high_order_bits[byte_count];
+  u32 encoded   = high_bits | bswapped;
+
+  *(u32*)utf8 = encoded;
+
+  return byte_count;
+}
+
 #elif defined(_MSC_VER)
 #  pragma warning(disable: 4206) // Disable "empty translation unit" warning
 #endif // defined(LOGS_ENABLED) && (LOGS_ENABLED != 0)
-
