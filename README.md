@@ -90,7 +90,7 @@ You can compile this example yourself:
 - This small library provides me with more explicit control over logs and their outputs
 - I avoid using the C standard library and runtime, which is great for executable size
   - Using Windows C runtime, compiling this library (`example.c` included) with `build.bat` results in a 106.5 KiB executable. It cannot fit into the L1 instruction cache of an [Intel's Lion Cove](https://en.wikipedia.org/wiki/Lion_Cove#L0) CPU nor in that of an [AMD's Zen 5](https://en.wikipedia.org/wiki/Zen_5#L1) CPU, both from 2024
-  - Without the C runtime, the executable shrinks down to 5120 bytes on Windows and 8712 bytes on Linux, meaning it could fit in the L1 cache of an [Intel's i486](https://en.wikipedia.org/wiki/I486#Differences_between_i386_and_i486) CPU from 1989 or in that of an [AMD's K6](https://en.wikipedia.org/wiki/AMD_K6#Models) CPU from 1997. I find it incredible to think about!
+  - Without the C runtime, the executable shrinks down to 5120 bytes on Windows and 8712 bytes on Linux, meaning it could fit in the L1 cache of an [Intel's i486](https://en.wikipedia.org/wiki/I486#Differences_between_i386_and_i486) CPU from 1989 or in that of an [AMD's K6](https://en.wikipedia.org/wiki/AMD_K6#Models) CPU from 1997. I find it incredible!
 
 
 ## License
