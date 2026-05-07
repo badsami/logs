@@ -1,5 +1,5 @@
 # Logs
-C buffered logging library for x64 Linux & Windows. Format data into a buffer of pre-determined size on the stack, then write it all at once to selected outputs. No C runtime, no C standard library, no dynamic allocation, minimal system calls and output traffic.
+C buffered logging library for x64 Linux & Windows. Format data into a buffer of pre-determined size on the stack, then write it all at once to selected outputs. No C runtime, no C standard library, no dynamic allocation, designed to minimize system calls.  
 Example (available in [`example.c`](example.c)):
 ```C
 #include "logs.h"
