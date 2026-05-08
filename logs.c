@@ -6,7 +6,7 @@
 #  include <Windows.h>
 #elif defined(LOGS_OS_LINUX)
 // #  include "linux_logs_syscalls.h"
-#  define STDOUT_FD 2
+#  define STDOUT_FD 1
 #endif
 
 
@@ -30,15 +30,17 @@ static inline u32 open_file_output_ascii(const char* file_path)
   #define O_RDWR	          00000002
   #define O_CREAT           00000100
   #define O_APPEND          00002000
-  #define O_DIRECT          00040000
-  #define CREAT_PERMISSIONS 00000755
+  #define CREAT_PERMISSIONS 00000775
   
-  const u64 flags = O_RDWR | O_CREAT | O_APPEND | O_DIRECT; 
-  const u64 open_syscall = 2;
+  const u64 flags = O_RDWR | O_CREAT | O_APPEND; 
+  register u64         open_syscall_rax __asm__("rax") = 2;
+  register const char* file_path_rdi    __asm__("rdi") = file_path;
+  register u64         flags_rsi        __asm__("rsi") = flags;
+  register u64         mode_rdx         __asm__("rdx") = CREAT_PERMISSIONS;
   s64 output;
   __asm__ __volatile__ ("syscall" :
                         "=a"(output) :
-                        "a"(open_syscall), "D"(file_path), "S"(flags), "d"(CREAT_PERMISSIONS) :
+                        "r"(open_syscall_rax), "r"(file_path_rdi), "r"(flags_rsi), "r"(mode_rdx) :
                         "rcx", "r11", "memory");
   return (u32)(s32)output;
 #endif
@@ -50,9 +52,12 @@ static inline void write_to_output(u32 output, const u8* data, u64 data_size)
   HANDLE handle = (HANDLE)(u64)output;
   WriteFile(handle, data, (u32)data_size, 0, 0);
 #elif defined(LOGS_OS_LINUX)
-  const u64 write_syscall = 1;
+  register u64       write_syscall_rax __asm__("rax") = 1;
+  register u32       output_rdi        __asm__("rdi") = output;
+  register const u8* data_rsi          __asm__("rsi") = data;
+  register u64       data_size_rdx     __asm__("rdx") = data_size;
   __asm__ __volatile__ ("syscall" : :
-                        "a"(write_syscall), "D"(output), "S"(data), "d"(data_size) :
+                        "r"(write_syscall_rax), "r"(output_rdi), "r"(data_rsi), "r"(data_size_rdx) :
                         "rcx", "r11", "memory");
 #endif
 }
@@ -65,9 +70,10 @@ static inline void logs_close_output(logs_output_idx output_idx)
 #if defined(LOGS_OS_WINDOWS)
   CloseHandle((HANDLE)(u64)output);
 #elif defined(LOGS_OS_LINUX)
-  const u64 close_syscall = 3;
+  register u64 close_syscall_rax __asm__("rax") = 3;
+  register u64 output_rdi        __asm__("rdi") = logs.outputs[output_idx];
   __asm__ __volatile__ ("syscall" : :
-                        "a"(close_syscall), "D"(output) :
+                        "r"(close_syscall_rax), "r"(output_rdi) :
                         "rcx", "r11", "memory");
 #endif
 
@@ -800,7 +806,7 @@ void log_dec_f32_number(f32 num)
   logs.buffer[logs.buffer_end_idx] = '-'; // overwritten if unnecessary
   logs.buffer_end_idx += is_neg;
 
-  // Absolute values equal or greater to 8 388 608 are likely better represented as a s32 or s64
+  // Absolute values equal or greater than 8 388 608 are likely better represented as a s32 or s64
   // than as a 32-bit floating-point value (thereafter referred to as "f32"), for two reasons:
   // 
   // 1. Range of values: f32 values can be as large as +/- 3.4 x 10^38. I've never needed to
