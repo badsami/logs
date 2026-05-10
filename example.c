@@ -47,7 +47,7 @@ void run_example(void)
 
 
 #if defined(LOGS_OS_WINDOWS)
-  __declspec(dllimport) void __stdcall ExitProcess(u32);
+  extern void ExitProcess(u32);
   s32 _fltused;
 
   void mainCRTStartup(void)

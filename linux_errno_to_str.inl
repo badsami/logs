@@ -1,5 +1,6 @@
 static const char* linux_errno_to_str[] =
 {
+  [0]   = "No error",
   [1]   = "Operation not permitted", // EPERM
   [2]   = "No such file or directory", // ENOENT
   [3]   = "No such process", // ESRCH

@@ -65,9 +65,8 @@ static inline void write_to_output(u32 output, const u8* data, u64 data_size)
 
 static inline void logs_close_output(logs_output_idx output_idx)
 {
-  u32 output = logs.outputs[output_idx];
-
 #if defined(LOGS_OS_WINDOWS)
+  u32 output = logs.outputs[output_idx];
   CloseHandle((HANDLE)(u64)output);
 #elif defined(LOGS_OS_LINUX)
   register u64 close_syscall_rax __asm__("rax") = 3;
